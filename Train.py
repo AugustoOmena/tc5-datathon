@@ -1,0 +1,155 @@
+# Train
+
+### Bibliotecas
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import f1_score
+from imblearn.over_sampling import SMOTE
+from feast import FeatureStore
+
+### Carregamento de Dados (Offline) para Treinamento e Testes
+# Primeiro, apontar para o repositório da FeatureStore
+off_line_data = FeatureStore(repo_path="feature_repo")
+
+# Em seguida, carregar todos os dados para obter todos os RAs a filtrar dos dados Off-line
+training_df = pd.read_parquet("feature_repo/data/df_evasao_escolar.parquet")
+print(training_df.columns.tolist())
+
+training_df["DATA_REGISTRO"] = pd.to_datetime(training_df["DATA_REGISTRO"])
+
+# Agora, filtrar a data desejada
+data_ref = pd.to_datetime("2022-01-01")
+
+df_filtrado = training_df[training_df["DATA_REGISTRO"].dt.date == data_ref.date()]
+
+print(df_filtrado.head(-5))
+
+# Criação da entity_df com os RAs únicos e a data de referência
+entity_df = df_filtrado[["RA", "DATA_REGISTRO"]].drop_duplicates()
+print(entity_df.head())
+
+retrieval_df = off_line_data.get_historical_features(
+    entity_df=entity_df,
+    features=off_line_data.get_feature_service("aluno_service"),
+).to_df()
+
+# Selecionar as features desejadas para o treinamento
+features_desejadas = [
+    "EVASAO",
+    "DESTAQUE_IEG",
+    "CG",
+    "CT",
+    "DESTAQUE_IPV",
+    "DESTAQUE_IDA",
+    "CF",
+    "IDADE",
+    "FASE_IDEAL",
+    "FASE",
+    "ANO_INGRESSO",
+]
+train_df = retrieval_df[features_desejadas]
+print(train_df.head())
+
+# 2. Separar 10% para validação balanceada (Dados REAIS)
+val_size = int(len(train_df) * 0.10)
+n_per_class = val_size // 2
+
+df_val_evasao = train_df[train_df["EVASAO"] == 1].sample(n=n_per_class, random_state=42)
+df_val_nao_evasao = train_df[train_df["EVASAO"] == 0].sample(
+    n=n_per_class, random_state=42
+)
+
+df_val = pd.concat([df_val_evasao, df_val_nao_evasao]).sample(frac=1, random_state=42)
+df_treino_original = train_df.drop(df_val.index)
+
+X_restante = df_treino_original.drop("EVASAO", axis=1)
+y_restante = df_treino_original["EVASAO"]
+
+# 3. SMOTE para 10.000 registros balanceados
+smote = SMOTE(sampling_strategy={0: 5000, 1: 5000}, random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X_restante, y_restante)
+
+# 4. Divisão Treino/Teste
+X_train, X_test, y_train, y_test = train_test_split(
+    X_resampled, y_resampled, test_size=0.2, random_state=42
+)
+
+# 5. Normalização (Ajustada no treino e aplicada ao resto)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+X_val_scaled = scaler.transform(df_val.drop("EVASAO", axis=1))
+y_val = df_val["EVASAO"]
+
+# 6. Configuração do GridSearchCV para múltiplos modelos
+# Dicionário de modelos e parâmetros
+model_params = {
+    "knn": {
+        "model": KNeighborsClassifier(),
+        "params": {
+            "n_neighbors": [3, 5, 11],
+            "weights": ["uniform", "distance"],
+        },
+    },
+    "logistic_regression": {
+        "model": LogisticRegression(max_iter=1000, solver="liblinear"),
+        "params": {
+            "C": [0.1, 1, 10],
+            "penalty": ["l1", "l2"],
+        },
+    },
+    "random_forest": {
+        "model": RandomForestClassifier(random_state=42),
+        "params": {
+            "n_estimators": [100, 200],
+            "max_depth": [None, 10, 20],
+            "min_samples_leaf": [1, 4],
+        },
+    },
+}
+
+scores = []
+
+# Loop para rodar os grids
+for model_name, mp in model_params.items():
+    print(f"Iniciando GridSearchCV para {model_name}...")
+    clf = GridSearchCV(mp["model"], mp["params"], cv=5, scoring="f1", n_jobs=-1)
+    clf.fit(X_train_scaled, y_train)
+
+    # Predição na validação (Dados REAIS)
+    y_pred = clf.predict(X_val_scaled)
+    f1 = f1_score(y_val, y_pred)
+
+    scores.append(
+        {
+            "model": model_name,
+            "best_score_treino": clf.best_score_,
+            "best_params": clf.best_params_,
+            "f1_val_real": f1,
+        }
+    )
+
+# 7. Exibição dos Resultados
+print("\n" + "=" * 50)
+print("RESULTADOS FINAIS NA VALIDAÇÃO REAL")
+print("=" * 50)
+df_results = pd.DataFrame(scores)
+print(df_results[["model", "f1_val_real", "best_params"]])
+
+# Opcional: Mostrar importância das variáveis para o melhor Random Forest
+best_rf = GridSearchCV(
+    model_params["random_forest"]["model"],
+    model_params["random_forest"]["params"],
+    cv=5,
+    scoring="f1",
+).fit(X_train_scaled, y_train)
+
+importances = pd.Series(
+    best_rf.best_estimator_.feature_importances_, index=X_restante.columns
+)
+print("\nTop 5 Variáveis mais importantes (Random Forest):")
+print(importances.sort_values(ascending=False).head(5))
