@@ -1,3 +1,4 @@
+import io
 import os
 import joblib
 import pandas as pd
@@ -5,6 +6,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from feast import FeatureStore
 from pathlib import Path
+from mangum import Mangum
+import boto3
+import shutil
 
 app = FastAPI(title="Predição de Evasão Escolar - TC5")
 
@@ -24,31 +28,57 @@ FEATURES_MODEL = [
 class PredictRequest(BaseModel):
     ra: str
 
+handler = Mangum(app)
+
+def get_latest_model_s3(bucket_name):
+    s3_client = boto3.client('s3')
+    
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="models/")
+    files = response.get('Contents', [])
+    
+    if not files:
+        raise RuntimeError("Nenhum modelo encontrado no S3!")
+
+    model_files = [f for f in files if f['Key'].endswith('.joblib')]
+    
+    latest_file = max(model_files, key=lambda x: x['LastModified'])
+    return latest_file['Key']
+
 @app.on_event("startup")
 def load_artifacts():
-    global store, model
+    global model, store
+    
+    source_repo = "/var/task/feature_repo"
+    temp_repo = "/tmp/feature_repo"
+    
     try:
-        store = FeatureStore(repo_path=str(REPO_PATH))
-        model_files = list(MODEL_DIR.glob("*.joblib"))
+        if os.path.exists(temp_repo):
+            shutil.rmtree(temp_repo)
+        shutil.copytree(source_repo, temp_repo)
+        
+        store = FeatureStore(repo_path=temp_repo)
+        print("✅ Feast inicializado no /tmp")
+        
+        bucket_name = os.environ.get("S3_BUCKET_NAME", "tc5-mlops-artifacts-f4d7a3e1")
+        s3_client = boto3.client('s3')
+        
+        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="models/")
+        model_files = [f for f in response.get('Contents', []) if f['Key'].endswith('.joblib')]
+        
         if not model_files:
-            raise RuntimeError("Nenhum modelo encontrado na pasta /models")
-
-        latest_model = max(model_files, key=os.path.getctime)
-        model = joblib.load(latest_model)
-        print(f"Artefatos carregados: Modelo {latest_model.name}")
-        try:
-            df_offline = pd.read_parquet(REPO_PATH / "data" / "df_evasao_escolar.parquet")
-            for col in FEATURES_MODEL:
-                if col in df_offline.columns:
-                    imputer_values[col] = df_offline[col].median()
-                else:
-                    imputer_values[col] = 0
-            print("Imputer values carregados para as features do modelo.")
-        except Exception as ie:
-            print(f"Aviso: não foi possível carregar dados off-line para imputação: {ie}")
+            raise Exception("Nenhum modelo encontrado no S3")
+            
+        latest_file = max(model_files, key=lambda x: x['LastModified'])['Key']
+        print(f"Baixando modelo: {latest_file}")
+        
+        model_obj = s3_client.get_object(Bucket=bucket_name, Key=latest_file)
+        model = joblib.load(io.BytesIO(model_obj['Body'].read()))
+        
     except Exception as e:
-        print(f"Erro no startup: {e}")
-
+        # Se falhar aqui, o log aparecerá agora porque estamos dentro do startup
+        print(f"ERRO NO STARTUP: {str(e)}")
+        raise e
+    
 @app.get("/")
 def health_check():
     return {"status": "online", "model_loaded": model is not None}

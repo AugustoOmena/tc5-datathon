@@ -13,6 +13,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import f1_score
 from imblearn.over_sampling import SMOTE
 from feast import FeatureStore
+import boto3
+import io
+from datetime import datetime
 
 
 ### Carregamento de Dados (Offline) para Treinamento e Testes
@@ -55,7 +58,7 @@ features_desejadas = [
 ]
 train_df = retrieval_df[features_desejadas]
 
-# 2. Separar 10% para validação balanceada (Dados REAIS)
+# Separar 10% para validação balanceada (Dados REAIS)
 val_size = int(len(train_df) * 0.10)
 n_per_class = val_size // 2
 
@@ -68,7 +71,7 @@ df_treino_original = train_df.drop(df_val.index)
 X_restante = df_treino_original.drop("EVASAO", axis=1)
 y_restante = df_treino_original["EVASAO"]
 
-# 3. SMOTE para 10.000 registros balanceados
+# SMOTE para 10.000 registros balanceados
 smote = SMOTE(sampling_strategy={0: 5000, 1: 5000}, random_state=42)
 X_resampled, y_resampled = smote.fit_resample(X_restante, y_restante)
 
@@ -76,7 +79,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X_resampled, y_resampled, test_size=0.2, random_state=42
 )
 
-# 5. Normalização (Ajustada no treino e aplicada ao resto)
+# Normalização (Ajustada no treino e aplicada ao resto)
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
@@ -118,6 +121,7 @@ for model_name, mp in model_params.items():
     })
     best_estimators[model_name] = clf.best_estimator_
 
+
 print("\n" + "=" * 50)
 print("RESULTADOS FINAIS NA VALIDAÇÃO REAL")
 print("=" * 50)
@@ -137,10 +141,30 @@ model_path = f"models/model_{best_model_name}_{timestamp}.joblib"
 joblib.dump(pipeline, model_path)
 print(f"Melhor modelo ({best_model_name}) salvo em: {model_path}")
 
+def save_model_to_s3(pipeline, model_name):
+    bucket_name = "tc5-mlops-artifacts-f4d7a3e1"
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    s3_key = f"models/model_{model_name}_{timestamp}.joblib"
+    
+    buffer = io.BytesIO()
+    joblib.dump(pipeline, buffer)
+    buffer.seek(0)
+    
+    session = boto3.Session(profile_name='envdev')
+    s3_client = session.client('s3')
+    
+    try:
+        s3_client.upload_fileobj(buffer, bucket_name, s3_key)
+        print(f"Sucesso! Melhor modelo ({model_name}) salvo no S3 em: s3://{bucket_name}/{s3_key}")
+    except Exception as e:
+        print(f"Erro ao salvar no S3: {e}")
+
+# Executa o salvamento
+save_model_to_s3(pipeline, best_model_name)
+
 # Mostrar importância das variáveis para o Random Forest treinado (se existir)
 if "random_forest" in best_estimators:
     rf = best_estimators["random_forest"]
     importances = pd.Series(rf.feature_importances_, index=X_restante.columns)
     print("\nTop 5 Variáveis mais importantes (Random Forest):")
     print(importances.sort_values(ascending=False).head(5))
-
