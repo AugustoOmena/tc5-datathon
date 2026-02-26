@@ -62,7 +62,6 @@ def fetch_historical_features_entity_df(store: FeatureStore, for_batch_scoring: 
     # for all entities in the offline store instead
     entity_df = pd.DataFrame.from_dict(
         {
-            # entity's join key -> entity values
             "driver_id": [1001, 1002, 1003],
             # "event_timestamp" (reserved key) -> timestamps
             "event_timestamp": [
@@ -96,7 +95,6 @@ def fetch_historical_features_entity_df(store: FeatureStore, for_batch_scoring: 
 
 def fetch_online_features(store, source: str = ""):
     entity_rows = [
-        # {join_key: entity_value}
         {
             "driver_id": 1001,
             "val_to_add": 1000,

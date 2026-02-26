@@ -1,6 +1,8 @@
 from feast import Entity, FeatureView, Field, FileSource, ValueType
 from feast.types import Int64, Float32, String
 from feast import FeatureService
+import os
+from pathlib import Path
 
 aluno_schema = [
     Field(name="ANO_INGRESSO", dtype=Float32),
@@ -35,16 +37,14 @@ aluno_schema = [
     Field(name="TURMA", dtype=Float32),
 ]
 
-# Entity (chave do aluno)
 aluno = Entity(
     name="aluno",
     join_keys=["RA"],
     value_type=ValueType.STRING,    
 )
 
-# Data source
 aluno_source = FileSource(
-    path="data/df_evasao_escolar.parquet",
+    path="feature_repo/data/df_evasao_escolar.parquet",
     timestamp_field="DATA_REGISTRO",
 )
 

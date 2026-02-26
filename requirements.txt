@@ -1,0 +1,15 @@
+fastapi>=0.68.0,<0.100
+uvicorn==0.27.0
+python-multipart
+
+feast==0.34.1
+pandas==1.5.3
+scikit-learn==1.3.2
+joblib==1.3.2
+imbalanced-learn==0.12.2
+pyarrow
+dask<2024.0.0
+
+boto3
+fsspec
+s3fs
