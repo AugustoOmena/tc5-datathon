@@ -51,3 +51,11 @@ Thumbs.db
 
 # Trained models
 models/
+
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/*.tfvars
+terraform/*.tfvars.json
+terraform/.terraform.lock.hcl
