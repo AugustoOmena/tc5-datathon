@@ -75,7 +75,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Rodar pipeline de treinamento
+      - name: Sincronizar Feast
+        run: |
+          cd feature_repo
+          feast apply
+          feast materialize 2020-01-01T00:00:00 $(date -u +"%Y-%m-%dT%H:%M:%S")
+          cd ..
+
+      - name: Rodar Treinamento
         run: python src/training/train.py
 
   terraform_deploy:
