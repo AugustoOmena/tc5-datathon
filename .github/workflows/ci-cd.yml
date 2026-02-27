@@ -77,8 +77,8 @@ jobs:
 
       - name: Sincronizar Feast
         run: |
-          feast -repo feature_repo apply
-          feast -repo feature_repo materialize 2020-01-01T00:00:00 $(date -u +"%Y-%m-%dT%H:%M:%S")
+          feast -c feature_repo apply
+          feast -c feature_repo materialize 2020-01-01T00:00:00 $(date -u +"%Y-%m-%dT%H:%M:%S")
 
       - name: Rodar Treinamento
         run: python src/training/train.py
