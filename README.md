@@ -52,7 +52,6 @@ O script de treino consome dados via Feast, executa GridSearchCV e envia o melho
 **Diferencial:** o melhor modelo é selecionado via **F1-Score** em um set de validação real.
 
 ```bash
-export AWS_PROFILE=envdev
 python src/training/train.py
 ```
 

@@ -1,6 +1,5 @@
 provider "aws" {
   region = "us-east-1"
-  profile = "envdev"
 }
 
 # Bucket S3 para armazenar tudo: Dados brutos, Parquets do Feast e Modelos
