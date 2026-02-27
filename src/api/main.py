@@ -3,7 +3,7 @@ import os
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from feast import FeatureStore
 from pathlib import Path
 from mangum import Mangum
@@ -26,7 +26,7 @@ FEATURES_MODEL = [
 ]
 
 class PredictRequest(BaseModel):
-    ra: str
+    ra: str = Field(example="RA-23", description="RA do aluno (deve começar com RA-)")
 
 handler = Mangum(app)
 

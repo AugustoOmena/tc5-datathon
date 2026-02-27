@@ -1,29 +1,108 @@
-# Feast Quickstart
-If you haven't already, check out the quickstart guide on Feast's website (http://docs.feast.dev/quickstart), which 
-uses this repo. A quick view of what's in this repository's `feature_repo/` directory:
+# 🎓 Projeto MLOps: Predição de Evasão Escolar (FIAP TC5)
 
-* `data/` contains raw demo parquet data
-* `feature_repo/feature_definitions.py` contains demo feature definitions
-* `feature_repo/feature_store.yaml` contains a demo setup configuring where data sources are
-* `feature_repo/test_workflow.py` showcases how to run all key Feast commands, including defining, retrieving, and pushing features. 
+Este projeto implementa uma arquitetura de MLOps de ponta a ponta para **predição de evasão escolar**. O sistema utiliza uma abordagem serverless escalável, integrando uma Feature Store para gestão de dados e um Model Registry dinâmico no S3.
 
-You can run the overall workflow with `python test_workflow.py`.
+---
 
-## To move from this into a more production ready workflow:
-> See more details in [Running Feast in production](https://docs.feast.dev/how-to-guides/running-feast-in-production)
+## 📁 Estrutura do Projeto
 
-1. First: you should start with a different Feast template, which delegates to a more scalable offline store. 
-   - For example, running `feast init -t gcp`
-   or `feast init -t aws` or `feast init -t snowflake`. 
-   - You can see your options if you run `feast init --help`.
-2. `feature_store.yaml` points to a local file as a registry. You'll want to setup a remote file (e.g. in S3/GCS) or a 
-SQL registry. See [registry docs](https://docs.feast.dev/getting-started/concepts/registry) for more details. 
-3. This example uses a file [offline store](https://docs.feast.dev/getting-started/components/offline-store) 
-   to generate training data. It does not scale. We recommend instead using a data warehouse such as BigQuery, 
-   Snowflake, Redshift. There is experimental support for Spark as well.
-4. Setup CI/CD + dev vs staging vs prod environments to automatically update the registry as you change Feast feature definitions. See [docs](https://docs.feast.dev/how-to-guides/running-feast-in-production#1.-automatically-deploying-changes-to-your-feature-definitions).
-5. (optional) Regularly scheduled materialization to power low latency feature retrieval (e.g. via Airflow). See [Batch data ingestion](https://docs.feast.dev/getting-started/concepts/data-ingestion#batch-data-ingestion)
-for more details.
-6. (optional) Deploy feature server instances with `feast serve` to expose endpoints to retrieve online features.
-   - See [Python feature server](https://docs.feast.dev/reference/feature-servers/python-feature-server) for details.
-   - Use cases can also directly call the Feast client to fetch features as per [Feature retrieval](https://docs.feast.dev/getting-started/concepts/feature-retrieval)
+Visão geral do que cada diretório contém:
+
+| Diretório | Descrição |
+|-----------|-----------|
+| **`src/`** | Código-fonte da aplicação. |
+| **`src/api/`** | API FastAPI (predição de evasão). Endpoints `/predict` e `/docs`, adaptada para AWS Lambda via Mangum. |
+| **`src/training/`** | Pipeline de treinamento: consome dados via Feast, executa GridSearchCV e envia o melhor modelo (.joblib) para o S3. |
+| **`feature_repo/`** | Repositório do **Feast** (Feature Store): definições de features, `feature_store.yaml`, dados e registros (SQLite). Clonado em runtime no Lambda para escrita. |
+| **`terraform/`** | Infraestrutura como Código (IaC): provisionamento AWS (Lambda, API Gateway, ECR, S3, IAM, etc.) e estado remoto no S3. |
+| **`notebooks/`** | Jupyter notebooks para exploração e experimentos. |
+| **`models/`** | Diretório local para artefatos de modelo (em produção o modelo vem do S3). |
+
+Arquivos na raiz: `Dockerfile` (imagem Lambda), `requirements.txt` (dependências Python) e `.gitignore`.
+
+---
+
+## 🏗️ Arquitetura e Tecnologias
+
+- **Feature Store:** [Feast](https://feast.dev/) — gerenciamento de features históricas e online.
+- **Model Registry:** AWS S3 — armazenamento versionado de artefatos `.joblib`.
+- **API:** FastAPI + Mangum — adaptador para AWS Lambda.
+- **Infraestrutura:** Terraform (IaC).
+- **Containerização:** Docker — imagem otimizada `linux/amd64` para AWS Lambda.
+- **Modelagem:** Scikit-Learn — pipelines de pré-processamento e modelos de classificação.
+
+---
+
+## 🚀 Fluxo de Operação
+
+### 1. Infraestrutura (Terraform)
+
+O provisionamento da AWS é automatizado. O estado do Terraform (`tfstate`) é armazenado remotamente no S3 para permitir colaboração e segurança.
+
+```bash
+cd terraform
+terraform init -migrate-state
+terraform apply
+```
+
+### 2. Pipeline de Treinamento & Upload
+
+O script de treino consome dados via Feast, executa GridSearchCV e envia o melhor modelo (`.joblib`) automaticamente para o bucket S3.
+
+**Diferencial:** o melhor modelo é selecionado via **F1-Score** em um set de validação real.
+
+```bash
+export AWS_PROFILE=envdev
+python src/training/Train.py
+```
+
+### 3. Deploy da API (Serverless Docker)
+
+A API é empacotada em um container Docker e enviada para o AWS ECR.
+
+```bash
+# Build focado na arquitetura do Lambda (AMD64)
+docker build --platform linux/amd64 --provenance=false -t [ECR_URI]:latest .
+docker push [ECR_URI]:latest
+
+# Atualização da função
+aws lambda update-function-code --function-name tc5-prediction-api --image-uri [ECR_URI]:latest --region us-east-1
+```
+
+### 4. Funcionamento da API na Nuvem
+
+- **Startup dinâmico:** ao iniciar, a API lista o bucket S3, identifica o modelo mais recente e o carrega em memória.
+- **Escrita em runtime:** para contornar a natureza read-only do Lambda, a API clona o repositório do Feast para a pasta `/tmp` no boot, garantindo permissão de escrita para locks do SQLite.
+
+---
+
+## 📈 Resultados do Modelo
+
+O pipeline de treinamento avaliou múltiplos modelos, obtendo o seguinte desempenho na validação real:
+
+| Modelo | F1-Score | Observação |
+|--------|----------|------------|
+| **Regressão Logística** | ~0,73 | Modelo selecionado para produção |
+| KNN | ~0,52 | — |
+| Random Forest | ~0,44 | — |
+
+---
+
+## 🛠️ Endpoints Principais
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| **POST** | `/predict` | Envia o RA do aluno e recebe a predição de evasão e as probabilidades. |
+| **GET** | `/docs` | Documentação interativa Swagger (acessível via API Gateway). |
+
+---
+
+## 🤖 Automação CI/CD (GitHub Actions)
+
+O projeto está configurado para deploy automático via GitHub Actions sempre que houver um push na branch `main`, automatizando o ciclo de **Build**, **Push** e **Update** no ambiente AWS.
+
+---
+
+## ✅ Próxima Etapa
+
+Com o README pronto e a API respondendo com **0,70 de probabilidade**, o projeto está em mãos para evoluir. Para configurar o workflow do GitHub Actions (`.github/workflows/deploy`), consulte a documentação do repositório ou o time de DevOps.

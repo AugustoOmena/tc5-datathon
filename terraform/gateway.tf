@@ -16,9 +16,17 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_uri  = aws_lambda_function.api_lambda.invoke_arn
 }
 
-resource "aws_apigatewayv2_route" "predict_route" {
+# Rota para o path raiz (health, etc.)
+resource "aws_apigatewayv2_route" "root" {
   api_id    = aws_apigatewayv2_api.lambda_api.id
-  route_key = "POST /predict"
+  route_key = "ANY /"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+# Proxy: todas as demais rotas (predict, docs, openapi.json, etc.) vão para a Lambda
+resource "aws_apigatewayv2_route" "proxy" {
+  api_id    = aws_apigatewayv2_api.lambda_api.id
+  route_key = "ANY /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
@@ -32,5 +40,6 @@ resource "aws_lambda_permission" "api_gw" {
 }
 
 output "api_url" {
-  value = "${aws_apigatewayv2_api.lambda_api.api_endpoint}/predict"
+  value       = aws_apigatewayv2_api.lambda_api.api_endpoint
+  description = "URL base da API (ex.: /predict, /docs, /)"
 }
