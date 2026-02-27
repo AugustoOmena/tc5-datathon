@@ -1,6 +1,6 @@
 import pytest
 
-import src.training.Train as train_module
+import src.training.train as train_module
 
 
 def test_model_params_contains_expected_models():

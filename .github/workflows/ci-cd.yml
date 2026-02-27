@@ -76,7 +76,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Rodar pipeline de treinamento
-        run: python src/training/Train.py
+        run: python src/training/train.py
 
   terraform_deploy:
     name: Terraform (infra AWS)
@@ -160,4 +160,3 @@ jobs:
             --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
             --image-uri "$IMAGE_URI" \
             --region ${{ env.AWS_REGION }}
-
