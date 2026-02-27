@@ -8,15 +8,15 @@ Este projeto implementa uma arquitetura de MLOps de ponta a ponta para **prediç
 
 Visão geral do que cada diretório contém:
 
-| Diretório | Descrição |
-|-----------|-----------|
-| **`src/`** | Código-fonte da aplicação. |
-| **`src/api/`** | API FastAPI (predição de evasão). Endpoints `/predict` e `/docs`, adaptada para AWS Lambda via Mangum. |
-| **`src/training/`** | Pipeline de treinamento: consome dados via Feast, executa GridSearchCV e envia o melhor modelo (.joblib) para o S3. |
+| Diretório           | Descrição                                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`src/`**          | Código-fonte da aplicação.                                                                                                                                     |
+| **`src/api/`**      | API FastAPI (predição de evasão). Endpoints `/predict` e `/docs`, adaptada para AWS Lambda via Mangum.                                                         |
+| **`src/training/`** | Pipeline de treinamento: consome dados via Feast, executa GridSearchCV e envia o melhor modelo (.joblib) para o S3.                                            |
 | **`feature_repo/`** | Repositório do **Feast** (Feature Store): definições de features, `feature_store.yaml`, dados e registros (SQLite). Clonado em runtime no Lambda para escrita. |
-| **`terraform/`** | Infraestrutura como Código (IaC): provisionamento AWS (Lambda, API Gateway, ECR, S3, IAM, etc.) e estado remoto no S3. |
-| **`notebooks/`** | Jupyter notebooks para exploração e experimentos. |
-| **`models/`** | Diretório local para artefatos de modelo (em produção o modelo vem do S3). |
+| **`terraform/`**    | Infraestrutura como Código (IaC): provisionamento AWS (Lambda, API Gateway, ECR, S3, IAM, etc.) e estado remoto no S3.                                         |
+| **`notebooks/`**    | Jupyter notebooks para exploração e experimentos.                                                                                                              |
+| **`models/`**       | Diretório local para artefatos de modelo (em produção o modelo vem do S3).                                                                                     |
 
 Arquivos na raiz: `Dockerfile` (imagem Lambda), `requirements.txt` (dependências Python) e `.gitignore`.
 
@@ -53,7 +53,7 @@ O script de treino consome dados via Feast, executa GridSearchCV e envia o melho
 
 ```bash
 export AWS_PROFILE=envdev
-python src/training/Train.py
+python src/training/train.py
 ```
 
 ### 3. Deploy da API (Serverless Docker)
@@ -80,20 +80,20 @@ aws lambda update-function-code --function-name tc5-prediction-api --image-uri [
 
 O pipeline de treinamento avaliou múltiplos modelos, obtendo o seguinte desempenho na validação real:
 
-| Modelo | F1-Score | Observação |
-|--------|----------|------------|
-| **Regressão Logística** | ~0,73 | Modelo selecionado para produção |
-| KNN | ~0,52 | — |
-| Random Forest | ~0,44 | — |
+| Modelo                  | F1-Score | Observação                       |
+| ----------------------- | -------- | -------------------------------- |
+| **Regressão Logística** | ~0,73    | Modelo selecionado para produção |
+| KNN                     | ~0,52    | —                                |
+| Random Forest           | ~0,44    | —                                |
 
 ---
 
 ## 🛠️ Endpoints Principais
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
+| Método   | Endpoint   | Descrição                                                              |
+| -------- | ---------- | ---------------------------------------------------------------------- |
 | **POST** | `/predict` | Envia o RA do aluno e recebe a predição de evasão e as probabilidades. |
-| **GET** | `/docs` | Documentação interativa Swagger (acessível via API Gateway). |
+| **GET**  | `/docs`    | Documentação interativa Swagger (acessível via API Gateway).           |
 
 ---
 
