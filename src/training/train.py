@@ -150,8 +150,7 @@ def save_model_to_s3(pipeline, model_name):
     joblib.dump(pipeline, buffer)
     buffer.seek(0)
     
-    session = boto3.Session(profile_name='envdev')
-    s3_client = session.client('s3')
+    s3_client = boto3.client("s3")
     
     try:
         s3_client.upload_fileobj(buffer, bucket_name, s3_key)
