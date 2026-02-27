@@ -17,12 +17,11 @@ def test_save_model_to_s3_uses_expected_bucket_and_prefix(monkeypatch):
             calls["bucket"] = bucket
             calls["key"] = key
 
-    class DummySession:
-        def client(self, name):
-            assert name == "s3"
-            return DummyS3Client()
+    def dummy_client(name):
+        assert name == "s3"
+        return DummyS3Client()
 
-    monkeypatch.setattr(train_module.boto3, "Session", lambda profile_name=None: DummySession())
+    monkeypatch.setattr(train_module.boto3, "client", dummy_client)
 
     dummy_pipeline = object()
     train_module.save_model_to_s3(dummy_pipeline, "logistic_regression")
