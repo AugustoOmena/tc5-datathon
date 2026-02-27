@@ -103,6 +103,21 @@ O projeto está configurado para deploy automático via GitHub Actions sempre qu
 
 ---
 
-## ✅ Próxima Etapa
+## ✅ Testes Automatizados
 
-Com o README pronto e a API respondendo com **0,70 de probabilidade**, o projeto está em mãos para evoluir. Para configurar o workflow do GitHub Actions (`.github/workflows/deploy`), consulte a documentação do repositório ou o time de DevOps.
+- **Rodar testes unitários e de integração básica**:
+
+```bash
+pytest
+```
+
+- **Rodar testes com cobertura de código**:
+
+```bash
+pytest --cov=src --cov=feature_repo
+```
+
+Observações:
+
+- Os testes usam `pytest` e estão organizados em `tests/unit` e `tests/integration`.
+- O teste de integração da API (`tests/integration/test_api_predict_integration.py`) fica marcado como `skip` por padrão, pois depende de acesso real ao S3 e ao Feast configurado. Remova o `@pytest.mark.skip` quando o ambiente estiver pronto.
