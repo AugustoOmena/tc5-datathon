@@ -36,6 +36,22 @@ def save_model_to_s3(pipeline, model_name):
         print(f"Erro ao salvar no S3: {e}")
 
 
+model_params = {
+    "knn": {
+        "model": KNeighborsClassifier(),
+        "params": {"n_neighbors": [3, 5, 11], "weights": ["uniform", "distance"]},
+    },
+    "logistic_regression": {
+        "model": LogisticRegression(max_iter=1000, solver="liblinear"),
+        "params": {"C": [0.1, 1, 10], "penalty": ["l1", "l2"]},
+    },
+    "random_forest": {
+        "model": RandomForestClassifier(random_state=42),
+        "params": {"n_estimators": [100, 200], "max_depth": [None, 10, 20], "min_samples_leaf": [1, 4]},
+    },
+}
+
+
 def run_training():
     # Carregamento de Dados (Offline) para Treinamento e Testes
     # Primeiro, apontar para o repositório da FeatureStore
@@ -112,21 +128,7 @@ def run_training():
         X_val_scaled = scaler.transform(df_val.drop("EVASAO", axis=1))
         y_val = df_val["EVASAO"]
 
-    # 6. Configuração do GridSearchCV para múltiplos modelos
-    model_params = {
-        "knn": {
-            "model": KNeighborsClassifier(),
-            "params": {"n_neighbors": [3, 5, 11], "weights": ["uniform", "distance"]},
-        },
-        "logistic_regression": {
-            "model": LogisticRegression(max_iter=1000, solver="liblinear"),
-            "params": {"C": [0.1, 1, 10], "penalty": ["l1", "l2"]},
-        },
-        "random_forest": {
-            "model": RandomForestClassifier(random_state=42),
-            "params": {"n_estimators": [100, 200], "max_depth": [None, 10, 20], "min_samples_leaf": [1, 4]},
-        },
-    }
+    # 6. Configuração do GridSearchCV para múltiplos modelos (usa `model_params` do módulo)
 
     results = []
     best_estimators = {}
