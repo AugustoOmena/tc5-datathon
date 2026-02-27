@@ -5,7 +5,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/api ./src/api
 COPY feature_repo ./feature_repo
-COPY models ./models
 
 ENV PYTHONPATH=${LAMBDA_TASK_ROOT}
 
