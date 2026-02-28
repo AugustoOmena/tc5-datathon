@@ -4,8 +4,8 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
@@ -48,4 +48,50 @@ resource "aws_lambda_function" "api_lambda" {
 resource "aws_cloudwatch_log_group" "lambda_log" {
   name              = "/aws/lambda/tc5-prediction-api"
   retention_in_days = 7
+}
+
+# policy allowing the Lambda to send custom metrics to CloudWatch
+resource "aws_iam_role_policy" "lambda_cw_metric" {
+  name = "tc5_lambda_put_metrics"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Dashboard for model monitoring and drift
+resource "aws_cloudwatch_dashboard" "model_drift" {
+  dashboard_name = "tc5-model-monitoring"
+  dashboard_body = <<DASH
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "TC5/Model", "PredictionValue" ],
+          [ "TC5/Model", "PredictionCount" ]
+        ],
+        "period": 300,
+        "view": "timeSeries",
+        "region": "us-east-1"
+      }
+    }
+  ]
+}
+DASH
 }
