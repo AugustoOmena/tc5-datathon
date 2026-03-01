@@ -93,3 +93,42 @@ def test_save_model_to_s3_uses_expected_bucket_and_prefix(monkeypatch):
     assert calls["key"].startswith("models/model_logistic_regression_")
     assert calls["key"].endswith(".joblib")
 
+
+def test_run_training_logs_to_mlflow(monkeypatch):
+    train_module = _import_train_module(monkeypatch)
+
+    # stub out pandas read_parquet to return minimal dataframe
+    import pandas as pd
+    monkeypatch.setattr(pd, "read_parquet", lambda path: pd.DataFrame({
+        "RA": ["A"],
+        "DATA_REGISTRO": [pd.Timestamp("2022-01-01")],
+        "EVASAO": [0],
+    }))
+
+    # prepare dummy mlflow collector
+    logs = []
+    class DummyRun:
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc, tb): pass
+    class DummyMLflow:
+        def start_run(self, nested=False):
+            logs.append(("start", nested))
+            return DummyRun()
+        def log_metric(self, name, value):
+            logs.append(("metric", name, value))
+        def log_param(self, name, value):
+            logs.append(("param", name, value))
+        def log_artifact(self, path, artifact_path=None):
+            logs.append(("artifact", path, artifact_path))
+        class sklearn:
+            @staticmethod
+            def log_model(model, artifact_path):
+                logs.append(("skmodel", artifact_path))
+    monkeypatch.setattr(train_module, "mlflow", DummyMLflow())
+
+    # run training (should not error with minimal data)
+    train_module.run_training()
+
+    assert any(l[0] == "metric" for l in logs), "expected mlflow metrics to be logged"
+    assert any(l[0] in ("artifact","skmodel") for l in logs), "expected mlflow model/artifact to be logged"
+

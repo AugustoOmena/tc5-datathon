@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pytest
+import mlflow
 from fastapi import HTTPException
 
 from src.api import main
@@ -78,6 +79,24 @@ def test_predict_happy_path_with_stubbed_dependencies():
     main.model = DummyModel()
     main.imputer_values = {}
 
+    # monitor calls to CloudWatch client
+    metrics_sent = []
+    class DummyCW:
+        def put_metric_data(self, Namespace, MetricData):
+            metrics_sent.append((Namespace, MetricData))
+    main.cw_client = DummyCW()
+
+    # patch MLflow so our predict call doesn't actually talk to a server
+    class DummyRunContext:
+        def __enter__(self): return self
+        def __exit__(self, exc_type, exc, tb): pass
+    class DummyMLflow:
+        def start_run(self, nested=False):
+            return DummyRunContext()
+        def log_metric(self, name, value):
+            metrics_sent.append(("mlflow", (name, value)))
+    main.mlflow = DummyMLflow()
+
     async def _call():
         return await main.predict(main.PredictRequest(ra="RA-999"))
 
@@ -87,6 +106,12 @@ def test_predict_happy_path_with_stubbed_dependencies():
     assert response["evasao_prediction"] == 1
     assert response["probability"] == [0.3, 0.7]
     assert response["status"] == "sucesso"
+
+    # ensure metrics were sent correctly
+    assert any(ns == "TC5/Model" for ns, _ in metrics_sent)
+    assert any(ns == "TC5/ModelFeatures" for ns, _ in metrics_sent)
+    # mlflow logging should also have been invoked
+    assert any(ns == "mlflow" for ns, _ in metrics_sent)
 
 
 def test_predict_handles_internal_exception():

@@ -9,6 +9,22 @@ from pathlib import Path
 from mangum import Mangum
 import boto3
 import shutil
+import logging
+
+# basic logger which will be captured by CloudWatch Logs when running in Lambda
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("tc5_api")
+
+# CloudWatch client for custom metrics
+cw_client = boto3.client("cloudwatch", region_name=os.environ.get("AWS_REGION", "sa-east-1"))
+
+# MLflow tracking
+import mlflow
+
+MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI")
+if MLFLOW_URI:
+    mlflow.set_tracking_uri(MLFLOW_URI)
+    mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT", "evasao_api"))
 
 app = FastAPI(title="Predição de Evasão Escolar - TC5")
 
@@ -57,7 +73,7 @@ def load_artifacts():
         shutil.copytree(source_repo, temp_repo)
         
         store = FeatureStore(repo_path=temp_repo)
-        print("✅ Feast inicializado no /tmp")
+        logger.info("✅ Feast inicializado no /tmp")
         
         bucket_name = os.environ.get("S3_BUCKET_NAME", "tc5-mlops-artifacts-f4d7a3e1")
         s3_client = boto3.client('s3')
@@ -69,14 +85,14 @@ def load_artifacts():
             raise Exception("Nenhum modelo encontrado no S3")
             
         latest_file = max(model_files, key=lambda x: x['LastModified'])['Key']
-        print(f"Baixando modelo: {latest_file}")
+        logger.info(f"Baixando modelo: {latest_file}")
         
         model_obj = s3_client.get_object(Bucket=bucket_name, Key=latest_file)
         model = joblib.load(io.BytesIO(model_obj['Body'].read()))
         
     except Exception as e:
         # Se falhar aqui, o log aparecerá agora porque estamos dentro do startup
-        print(f"ERRO NO STARTUP: {str(e)}")
+        logger.error(f"ERRO NO STARTUP: {str(e)}")
         raise e
     
 @app.get("/")
@@ -113,6 +129,38 @@ async def predict(request: PredictRequest):
 
         prediction = model.predict(X)[0]
         probability = model.predict_proba(X)[0].tolist()
+
+        # log information for monitoring
+        logger.info(f"predicted ra={request.ra} value={prediction} prob={probability}")
+
+        # push custom metrics to CloudWatch so dashboard can track drift
+        try:
+            cw_client.put_metric_data(
+                Namespace="TC5/Model",
+                MetricData=[
+                    {"MetricName": "PredictionValue", "Value": float(prediction)},
+                    {"MetricName": "PredictionCount", "Value": 1},
+                ],
+            )
+            # also send feature values (first record) for drift analysis
+            feature_metrics = []
+            for col in X.columns:
+                # flatten numpy types
+                feature_metrics.append({"MetricName": col, "Value": float(X[col].iloc[0])})
+            if feature_metrics:
+                cw_client.put_metric_data(Namespace="TC5/ModelFeatures", MetricData=feature_metrics)
+        except Exception as cw_err:
+            logger.warning(f"falha ao enviar métricas para CloudWatch: {cw_err}")
+
+        # record the prediction and features in MLflow if configured
+        if MLFLOW_URI:
+            try:
+                with mlflow.start_run(nested=True):
+                    mlflow.log_metric("prediction", float(prediction))
+                    for col in X.columns:
+                        mlflow.log_metric(col, float(X[col].iloc[0]))
+            except Exception as m_err:
+                logger.warning(f"falha ao enviar métricas para MLflow: {m_err}")
 
         return {
             "ra": request.ra,
