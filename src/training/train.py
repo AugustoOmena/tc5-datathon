@@ -195,11 +195,9 @@ def log_drift_panel_mlflow(reference_df, current_df, feature_cols):
 
 
 def run_training():
-    # Carregamento de Dados (Offline) para Treinamento e Testes
-    # Primeiro, apontar para o repositório da FeatureStore
+
     feature_store = FeatureStore(repo_path="feature_repo")
 
-    # Em seguida, carregar os dados off-line que contêm as chaves (RAs) e timestamps
     training_df = pd.read_parquet("feature_repo/data/df_evasao_escolar.parquet")
     training_df["DATA_REGISTRO"] = pd.to_datetime(training_df["DATA_REGISTRO"])
 
@@ -218,7 +216,6 @@ def run_training():
         .to_df()
     )
 
-    # Selecionar as features desejadas para o treinamento
     features_desejadas = [
         "EVASAO",
         "DESTAQUE_IEG",
@@ -247,7 +244,6 @@ def run_training():
     X_restante = df_treino_original.drop("EVASAO", axis=1)
     y_restante = df_treino_original["EVASAO"]
 
-    # SMOTE para 10.000 registros balanceados
     smote = SMOTE(sampling_strategy={0: 5000, 1: 5000}, random_state=42)
     X_resampled, y_resampled = smote.fit_resample(X_restante, y_restante)
 
@@ -255,22 +251,18 @@ def run_training():
         X_resampled, y_resampled, test_size=0.2, random_state=42
     )
 
-    # Normalização (Ajustada no treino e aplicada ao resto)
     scaler = StandardScaler()
     if len(X_train) == 0:
         raise ValueError("No training samples available after resampling and split")
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # In case df_val has fewer rows than expected, handle gracefully
     if df_val.shape[0] == 0:
         X_val_scaled = X_test_scaled
         y_val = y_test
     else:
         X_val_scaled = scaler.transform(df_val.drop("EVASAO", axis=1))
         y_val = df_val["EVASAO"]
-
-    # 6. Configuração do GridSearchCV para múltiplos modelos (usa `model_params` do módulo)
 
     results = []
     best_estimators = {}
@@ -337,10 +329,20 @@ def run_training():
     df_results = pd.DataFrame(results)
     print(df_results[["model", "f1_val_real", "best_params"]])
 
+    best_result = max(results, key=lambda r: r["f1_val_real"])
+    best_model_name = best_result["model"]
+    best_estimator = best_estimators[best_model_name]
+
+    pipeline = Pipeline([("scaler", scaler), ("model", best_estimator)])
+    os.makedirs("models", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    model_path = f"models/model_{best_model_name}_{timestamp}.joblib"
+    joblib.dump(pipeline, model_path)
+    print(f"Melhor modelo ({best_model_name}) salvo em: {model_path}")
+
     # Executa o salvamento
     save_model_to_s3(pipeline, best_model_name)
 
-    # Mostrar importância das variáveis para o Random Forest treinado (se existir)
     if "random_forest" in best_estimators:
         rf = best_estimators["random_forest"]
         importances = pd.Series(rf.feature_importances_, index=X_restante.columns)
