@@ -1,0 +1,614 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "ApiId": "$api_id"
+          },
+          "expression": "",
+          "id": "",
+          "label": "Requests",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "Count",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApiGateway",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$aws_region",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "Throughput (Requests/min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "ApiId": "$api_id"
+          },
+          "expression": "",
+          "id": "",
+          "label": "4XX",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "4xx",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApiGateway",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$aws_region",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "ApiId": "$api_id"
+          },
+          "expression": "",
+          "id": "",
+          "label": "5XX",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "5xx",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApiGateway",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "$aws_region",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "Errors (4XX / 5XX)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "ms",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 3000
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "ApiId": "$api_id"
+          },
+          "expression": "",
+          "id": "",
+          "label": "API Latency p95",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "Latency",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApiGateway",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$aws_region",
+          "sqlExpression": "",
+          "statistic": "p95"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "dimensions": {
+            "FunctionName": "$lambda_function_name"
+          },
+          "expression": "",
+          "id": "",
+          "label": "Lambda Duration p95",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "Duration",
+          "metricQueryType": 0,
+          "namespace": "AWS/Lambda",
+          "period": "60",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "$aws_region",
+          "sqlExpression": "",
+          "statistic": "p95"
+        }
+      ],
+      "title": "Latency P95 (API + Lambda)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "@timestamp"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${DS_CLOUDWATCH}"
+          },
+          "expression": "fields @timestamp, requestId, routeKey, status, integrationLatency, sourceIp, userAgent | sort @timestamp desc | limit 100",
+          "id": "",
+          "logGroups": [
+            {
+              "arn": "arn:aws:logs:$aws_region:$aws_account_id:log-group:$apigw_log_group_name:*",
+              "name": "$apigw_log_group_name"
+            }
+          ],
+          "metricEditorMode": 0,
+          "metricName": "",
+          "metricQueryType": 0,
+          "namespace": "",
+          "period": "",
+          "queryMode": "Logs",
+          "refId": "A",
+          "region": "$aws_region",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "API Access Logs (requestId)",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "tc5",
+    "api",
+    "observability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "us-east-1",
+          "value": "us-east-1"
+        },
+        "hide": 0,
+        "label": "AWS Region",
+        "name": "aws_region",
+        "options": [
+          {
+            "selected": true,
+            "text": "us-east-1",
+            "value": "us-east-1"
+          }
+        ],
+        "query": "us-east-1",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "kt97nlxbf6",
+          "value": "kt97nlxbf6"
+        },
+        "hide": 0,
+        "label": "API Gateway ID",
+        "name": "api_id",
+        "options": [
+          {
+            "selected": true,
+            "text": "kt97nlxbf6",
+            "value": "kt97nlxbf6"
+          }
+        ],
+        "query": "kt97nlxbf6",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "tc5-prediction-api",
+          "value": "tc5-prediction-api"
+        },
+        "hide": 0,
+        "label": "Lambda Function",
+        "name": "lambda_function_name",
+        "options": [
+          {
+            "selected": true,
+            "text": "tc5-prediction-api",
+            "value": "tc5-prediction-api"
+          }
+        ],
+        "query": "tc5-prediction-api",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "488081132204",
+          "value": "488081132204"
+        },
+        "hide": 0,
+        "label": "AWS Account ID",
+        "name": "aws_account_id",
+        "options": [
+          {
+            "selected": true,
+            "text": "488081132204",
+            "value": "488081132204"
+          }
+        ],
+        "query": "488081132204",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "/aws/apigateway/tc5-ml-gateway",
+          "value": "/aws/apigateway/tc5-ml-gateway"
+        },
+        "hide": 0,
+        "label": "API GW Log Group",
+        "name": "apigw_log_group_name",
+        "options": [
+          {
+            "selected": true,
+            "text": "/aws/apigateway/tc5-ml-gateway",
+            "value": "/aws/apigateway/tc5-ml-gateway"
+          }
+        ],
+        "query": "/aws/apigateway/tc5-ml-gateway",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "TC5 API Observability",
+  "uid": "tc5-api-observability",
+  "version": 1,
+  "weekStart": ""
+}

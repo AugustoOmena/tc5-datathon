@@ -11,7 +11,7 @@ data "aws_subnets" "default" {
 
 resource "aws_cloudwatch_log_group" "mlflow" {
   name              = "/ecs/tc5-mlflow"
-  retention_in_days = 7
+  retention_in_days = 30
 }
 
 resource "aws_ecr_repository" "mlflow_server" {

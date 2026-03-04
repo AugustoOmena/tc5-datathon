@@ -4,10 +4,34 @@ resource "aws_apigatewayv2_api" "lambda_api" {
   protocol_type = "HTTP"
 }
 
+resource "aws_cloudwatch_log_group" "apigw_access_log" {
+  name              = "/aws/apigateway/tc5-ml-gateway"
+  retention_in_days = 7
+}
+
 resource "aws_apigatewayv2_stage" "lambda_stage" {
   api_id      = aws_apigatewayv2_api.lambda_api.id
   name        = "$default"
   auto_deploy = true
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.apigw_access_log.arn
+    format = jsonencode({
+      requestId          = "$context.requestId"
+      routeKey           = "$context.routeKey"
+      status             = "$context.status"
+      responseLength     = "$context.responseLength"
+      integrationStatus  = "$context.integrationStatus"
+      integrationLatency = "$context.integrationLatency"
+      requestTime        = "$context.requestTime"
+      sourceIp           = "$context.identity.sourceIp"
+      userAgent          = "$context.identity.userAgent"
+    })
+  }
+
+  default_route_settings {
+    detailed_metrics_enabled = true
+  }
 }
 
 resource "aws_apigatewayv2_integration" "lambda_integration" {

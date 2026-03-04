@@ -38,10 +38,61 @@ Arquivos na raiz: `Dockerfile` (imagem Lambda), `requirements.txt` (dependência
 ### 📊 Monitoramento com MLflow
 Além do dashboard em CloudWatch, o projeto agora registra **predições e características** em um experimento do MLflow. Isso permite analisar deriva de distribuição usando a UI do MLflow ou integrá‑la a ferramentas externas.
 
-- O tracking URI é configurado pela variável de ambiente `MLFLOW_TRACKING_URI` (ex.: `http://<seu-servidor>:5000` ou `sqlite:///mlflow.db`).
-- Artefatos (modelos, arquivos) podem ser armazenados em S3; o bucket criado durante o provisionamento (`mlflow_bucket_name` no `terraform output`) serve como `--default-artifact-root`.
-- Na API Lambda, a cada requisição `/predict` uma *run* aninhada é criada e os valores das features + previsão são logados como métricas.
-- No treinamento (`src/training/train.py`) o experimento armazena hiperparâmetros, F1 dos modelos, o pipeline final e um painel de drift com PSI.
+### 📈 Monitoramento da API com Grafana
+
+1. Garanta que você está autenticado na mesma conta/usuário AWS:
+
+```bash
+aws sts get-caller-identity
+```
+2. Aplique a infraestrutura (Grafana está habilitado por padrão):
+
+```bash
+terraform -chdir=terraform init
+terraform -chdir=terraform apply -var="aws_region=us-east-1"
+```
+
+3. Recupere a URL do workspace Grafana:
+```bash
+terraform -chdir=terraform output -raw grafana_workspace_url
+```
+4. Acesse a URL do workspace e autentique via **AWS IAM Identity Center (AWS SSO)**.
+
+  Fluxo recomendado de acesso:
+  - No IAM Identity Center, adicione seu usuário (ou grupo) à aplicação do Amazon Managed Grafana.
+  - No workspace Grafana, atribua papel `Admin` (para configurar datasource/dashboards) ou `Editor` (para editar dashboards).
+  - Entre no workspace com o botão de login SSO e selecione a conta/perfil correto.
+
+5. Garanta que o role usado pelo workspace do Grafana tenha permissões de leitura para CloudWatch Metrics e CloudWatch Logs (Logs Insights). O projeto é provisionado pelo Terraform em `aws_iam_role_policy.grafana_cloudwatch_read` 
+
+6. Use o dashboard `tc5-api-observability` (criado no CloudWatch) como base para painéis no Grafana com métricas de:
+  - API Gateway: `Count`, `4xx`, `5xx`, `Latency`, `IntegrationLatency`
+  - Lambda: `Invocations`, `Errors`, `Throttles`, `Duration`
+
+### 🔁 Alternativa quando SSO não está habilitado: Grafana fora da AWS
+
+Se sua conta/região não tem IAM Identity Center habilitado (erro `SSO is not enabled in any region`), você pode rodar **Grafana OSS localmente** e consultar CloudWatch da mesma conta AWS:
+
+1. No Terraform, desative o Amazon Managed Grafana:
+
+```bash
+terraform -chdir=terraform apply -var="aws_region=us-east-1" -var="enable_grafana=false"
+```
+
+2. Suba o Grafana OSS:
+
+```bash
+cd monitoring/grafana
+copy .env.example .env
+# edite o .env com suas credenciais AWS
+docker compose up -d
+```
+3. Acesse `http://localhost:3000` (usuário `admin`, senha `admin123`).
+
+Arquivos :
+- `monitoring/grafana/docker-compose.yml`
+- `monitoring/grafana/provisioning/datasources/cloudwatch.yml`
+- `monitoring/grafana/provisioning/dashboards/dashboards.yml`
 
 Para visualizar:
 
@@ -287,14 +338,6 @@ na região **sa-east-1** (Brasil).
    - A qualquer momento acesse
      `https://console.aws.amazon.com/cloudwatch/home?region=sa-east-1#dashboards:
      name=tc5-model-monitoring` (ajuste a conta/URL conforme necessário).
-
-4. **Extensões e melhorias**
-   - É possível adicionar um *CloudWatch Event Rule* / *Lambda agendado* para
-     calcular métricas de drift mais sofisticadas (p.ex. Kullback‑Leibler ou
-     KS) a partir das métricas já publicadas.
-   - Qualquer alarme ou *dashboard* adicional pode ser definido via Terraform
-     ou manualmente na console.
-
 ---
 
 ---
