@@ -128,32 +128,6 @@ def test_run_training_with_mocks(monkeypatch, tmp_path, capsys):
 
     monkeypatch.setattr(train_module, "SMOTE", FakeSMOTE)
 
-    # Fake GridSearchCV to be fast and deterministic
-    class FakeGridSearch:
-        def __init__(self, model, params, cv, scoring, n_jobs):
-            self.model = model
-            self.params = params
-            self.best_score_ = None
-            self.best_params_ = None
-            self.best_estimator_ = None
-
-        def fit(self, X, y):
-            # create a simple estimator with predict
-            class Est:
-                def __init__(self, n_features):
-                    self.feature_importances_ = np.array([1.0] * n_features)
-
-                def predict(self, Xp):
-                    return np.zeros(len(Xp), dtype=int)
-
-            self.best_score_ = 0.9
-            self.best_params_ = {"dummy": 1}
-            self.best_estimator_ = Est(X.shape[1])
-            return self
-
-        def predict(self, X):
-            return self.best_estimator_.predict(X)
-
     monkeypatch.setattr(train_module, "GridSearchCV", FakeGridSearch)
 
     # Prevent actual S3 upload in the training run

@@ -96,6 +96,7 @@ def test_predict_happy_path_with_stubbed_dependencies():
         def log_metric(self, name, value):
             metrics_sent.append(("mlflow", (name, value)))
     main.mlflow = DummyMLflow()
+    main.MLFLOW_URI = "dummy_uri"
 
     async def _call():
         return await main.predict(main.PredictRequest(ra="RA-999"))
