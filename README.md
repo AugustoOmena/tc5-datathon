@@ -1,28 +1,83 @@
-# 🎓 Projeto MLOps: Predição de Evasão Escolar (FIAP TC5)
+# MLOPS Datathon (Fase 5) : Predição de Evação Escolar - Case Passos Mágicos
 
-Este projeto implementa uma arquitetura de MLOps de ponta a ponta para **predição de evasão escolar**. O sistema utiliza uma abordagem serverless escalável, integrando uma Feature Store para gestão de dados e um Model Registry dinâmico no S3.
+Para o Datathon, o desafio proposto foi o seguinte:
 
----
 
-## 📁 Estrutura do Projeto
+📢 **Problema:**
 
-Visão geral do que cada diretório contém:
+A Associação Passos Mágicos atua na transformação de vidas de crianças e jovens em vulnerabilidade social por meio de um modelo que integra educação de qualidade, apoio psicossocial e desenvolvimento pessoal. No entanto, essa missão enfrenta barreiras severas como a insegurança alimentar, o trabalho precoce e a defasagem idade-série, fatores que historicamente alimentam a evasão escolar no Brasil. A saída prematura do estudante não representa apenas uma perda estatística, mas a interrupção de um ciclo de aceleração do conhecimento e o distanciamento de oportunidades que poderiam romper a barreira da desigualdade social.
 
-| Diretório           | Descrição                                                                                                                                                      |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`src/`**          | Código-fonte da aplicação.                                                                                                                                     |
-| **`src/api/`**      | API FastAPI (predição de evasão). Endpoints `/predict` e `/docs`, adaptada para AWS Lambda via Mangum.                                                         |
-| **`src/training/`** | Pipeline de treinamento: consome dados via Feast, executa GridSearchCV e envia o melhor modelo (.joblib) para o S3.                                            |
-| **`feature_repo/`** | Repositório do **Feast** (Feature Store): definições de features, `feature_store.yaml`, dados e registros (SQLite). Clonado em runtime no Lambda para escrita. |
-| **`terraform/`**    | Infraestrutura como Código (IaC): provisionamento AWS (Lambda, API Gateway, ECR, S3, IAM, etc.) e estado remoto no S3.                                         |
-| **`notebooks/`**    | Jupyter notebooks para exploração e experimentos.                                                                                                              |
-| **`models/`**       | Diretório local para artefatos de modelo (em produção o modelo vem do S3).                                                                                     |
+Nesse cenário, o desenvolvimento de um modelo preditivo torna-se uma ferramenta estratégica para a sustentabilidade do impacto social da organização. Ao analisar indicadores críticos como o INDE (Índice de Desenvolvimento Educacional) e suas dimensões de desempenho acadêmico e engajamento (IDA e IEG) — que juntos explicam cerca de 90% da variação do desenvolvimento dos alunos —, o modelo permite uma atuação preventiva. Identificar antecipadamente os perfis com maior risco de abandono possibilita que a equipe direcione intervenções personalizadas, garantindo que o suporte da Passos Mágicos não seja interrompido antes da transformação completa da realidade do aluno.
 
-Arquivos na raiz: `Dockerfile` (imagem Lambda), `requirements.txt` (dependências Python) e `.gitignore`.
+## 📌 Objetivos
 
----
 
-## 🏗️ Arquitetura e Tecnologias
+Desenvolver e operacionalizar um ecossistema de Machine Learning capaz de prever o risco de evasão escolar, permitindo intervenções preventivas e baseadas em dados. Para isso, os objetivos específicos incluem:
+
+- **Engenharia de Dados e Governança:** Estruturar um pipeline de ingestão para organizar, tratar e normalizar os dados históricos da Passos Mágicos, implementando um Feature Store para garantir a consistência e a disponibilidade dos dados tanto para o treinamento quanto para a inferência.
+
+- **Desenvolvimento do Modelo Preditivo:** Treinar e otimizar modelos de classificação, com foco no ajuste de hiperparâmetros e na utilização da métrica F1-Score, priorizando a precisão na identificação de alunos em risco real de evasão no ciclo seguinte.
+
+- **Implementação de MLOps e Deploy:** Realizar o deploy do modelo de melhor desempenho em ambiente de nuvem (AWS), utilizando FastAPI para a interface de consumo e GitHub Actions para a automação do fluxo de CI/CD (integração e entrega contínua).
+
+- **Monitoramento e Escalabilidade:** Estabelecer ferramentas de monitoramento para rastrear a saúde da aplicação em produção, acompanhando métricas de performance técnica, tempos de resposta e o consumo de recursos computacionais.
+
+- **Reprodutibilidade e Storytelling:** Documentar todo o ciclo de vida do projeto, desde a análise exploratória até o deploy final, garantindo que a solução seja auditável e apresentando os resultados de forma estratégica para os stakeholders.
+
+
+## 📌 Entregáveis
+
+
+- **Repositório de Código-Fonte:** Ambiente no GitHub com a estrutura completa do projeto, seguindo boas práticas de organização, versionamento e documentação do código (scripts de treinamento, processamento e infraestrutura).
+
+- **Documentação Técnica (README):** Guia detalhado abrangendo desde a análise exploratória e lógica de negócio até as instruções de execução e arquitetura da solução.
+
+- **Infraestrutura de Ingestão e Feature Store:** Implementação do pipeline de dados que garante a persistência e o consumo de atributos tratados para o modelo.
+
+- **API de Inferência em Produção:** Endpoint desenvolvido em FastAPI e hospedado em nuvem (AWS), permitindo a integração do modelo com outras aplicações em tempo real.
+
+- **Pipeline de CI/CD:** Automação do deploy via GitHub Actions, garantindo a entrega contínua e a integridade do ambiente produtivo.
+
+- **Apresentação Executiva (Vídeo):** Pitch de até cinco minutos com foco gerencial, apresentando o storytelling do problema, a arquitetura da solução e os resultados alcançados pelo modelo.
+  
+
+## 📌 Desafios
+
+
+O desenvolvimento desta solução enfrentou desafios críticos inerentes a projetos de impacto social e engenharia de ML:
+
+- **Qualidade e Consistência de Dados Históricos:** Lidar com dados provenientes de diferentes edições da pesquisa (PEDE 2020, 2021, 2022) exigiu um rigoroso processo de limpeza para tratar valores ausentes (missing values) e padronizar registros inconsistentes entre os anos.
+
+- **Engenharia de Atributos (Feature Engineering):** A dificuldade de transformar indicadores multidimensionais e subjetivos (como os indicadores psicossociais e psicopedagógicos) em variáveis numéricas de alta qualidade que realmente possuam poder preditivo para o modelo.
+
+- **Escalabilidade e Custo Computacional:** O processamento de grandes volumes de dados brutos exigiu a estruturação de um pipeline eficiente para evitar latência e custos excessivos de nuvem durante o treinamento e a inferência.
+
+- **Orquestração do Deploy:** Configurar um fluxo de CI/CD via GitHub Actions para a AWS que garanta que o modelo em produção seja sempre o de melhor performance, sem interromper a disponibilidade da API.
+  
+
+## 📌 Proposta de solução
+
+
+A solução proposta consiste no desenvolvimento de um ecossistema de Machine Learning de ponta a ponta (end-to-end), projetado para identificar precocemente alunos com alto risco de evasão escolar. A inteligência do modelo baseia-se em uma arquitetura de dados temporal, permitindo que a organização atue de forma preventiva antes que o desligamento do aluno se concretize.
+
+A solução está estruturada nos seguintes pilares técnicos:
+
+- **Engenharia de Dados e Janelas Temporais:** O dataset foi construído utilizando uma lógica de Janelas de Dados (Rolling Windows). Em vez de registros estáticos, o modelo analisa "ciclos anuais" de desempenho (Ano N) para prever a permanência ou evasão no ano subsequente (Ano N+1). Foram consolidadas janelas de treinamento (Ex: 2022 -> 2023 e 2023 -> 2024), permitindo que o algoritmo aprenda padrões de comportamento que precedem o abandono.
+
+- **Estratégia de Rotulagem (Labeling) e Tratamento de Exceções:** Implementamos uma regra de negócio rigorosa para a definição do Target. Foram classificados como Evasão (Classe 1) os alunos ausentes no ano seguinte, com a exclusão automática de casos de "Conclusão" (Fase 8/Universitários e Formados). Isso garante que o modelo não confunda o sucesso acadêmico com a evasão escolar, aumentando a precisão da ferramenta.
+
+- **Governança com Feature Store:** Utilização de um repositório centralizado (feature_repo) para gerenciar indicadores multidimensionais (INDE, notas de Português/Matemática e indicadores psicossociais). O uso do Feast garante que as mesmas definições de variáveis sejam usadas de forma consistente no treinamento e na inferência via API.
+
+- **Infraestrutura Cloud e MLOps:** Provisionamento de recursos na AWS via Terraform, utilizando AWS Lambda e FastAPI para servir as predições. O ciclo de vida é automatizado por um pipeline de CI/CD no GitHub Actions, que realiza testes de integração e o deploy contínuo da solução em containers Docker.
+
+Com essa abordagem, a Passos Mágicos obtém uma ferramenta capaz de correlacionar oscilações em indicadores críticos (como a mudança na cor da "Pedra" ou queda no INDE) com o risco iminente de evasão, transformando dados históricos em ações preventivas de impacto social.
+
+
+**Importante**
+
+Os arquivos **Datathon - Anotações Importantes.docx** e **Construção do Dataset para Modelo de Classificação de Evasão.docx** anexos a este repositório possuem uma série de informações compiladadas sobre a metodologia abordada pela Passos Mágicos, bem como, a lógica pensada para a construção do Dataset de treinamento dos modelos de Machine Learning.
+
+Além disso, toda a implementação foi feita usando **Python e bibliotecas**, tais como:
 
 - **Feature Store:** [Feast](https://feast.dev/) — gerenciamento de features históricas e online.
 - **Model Registry:** AWS S3 — armazenamento versionado de artefatos `.joblib`.
@@ -31,295 +86,235 @@ Arquivos na raiz: `Dockerfile` (imagem Lambda), `requirements.txt` (dependência
 - **Containerização:** Docker — imagem otimizada `linux/amd64` para AWS Lambda.
 - **Modelagem:** Scikit-Learn — pipelines de pré-processamento e modelos de classificação.
 
----
 
-## 🚀 Fluxo de Operação
+### 📂 Estrutura do projeto
 
-### 📊 Monitoramento com MLflow
-Além do dashboard em CloudWatch, o projeto agora registra **predições e características** em um experimento do MLflow. Isso permite analisar deriva de distribuição usando a UI do MLflow ou integrá‑la a ferramentas externas.
-
-- O tracking URI é configurado pela variável de ambiente `MLFLOW_TRACKING_URI` (ex.: `http://<seu-servidor>:5000` ou `sqlite:///mlflow.db`).
-- Artefatos (modelos, arquivos) podem ser armazenados em S3; o bucket criado durante o provisionamento (`mlflow_bucket_name` no `terraform output`) serve como `--default-artifact-root`.
-- Na API Lambda, a cada requisição `/predict` uma *run* aninhada é criada e os valores das features + previsão são logados como métricas.
-- No treinamento (`src/training/train.py`) o experimento armazena hiperparâmetros, F1 dos modelos, o pipeline final e um painel de drift com PSI.
-
-Para visualizar:
-
-```bash
-# iniciar servidor MLflow local apontando para bucket S3 de artifacts
-mlflow server \
-    --backend-store-uri sqlite:///mlflow.db \
-    --default-artifact-root s3://$(terraform -chdir=terraform output -raw mlflow_bucket_name) \
-    --host 0.0.0.0 --port 5000
+```
+TC5-DATATHON-MAIN
+├── .github/workflows/       # Automação de CI/CD (GitHub Actions)
+│   └── ci-cd.yml            # Pipeline de integração e entrega contínua
+├── feature_repo/            # Repositório do Feature Store (Feast)
+│   ├── data/                # Armazenamento local de dados/parquets
+│   ├── feature_definitions.py # Definição de entidades e visualizações de features
+│   └── feature_store.yaml   # Configuração do ambiente do Feature Store
+├── notebooks/               # Documentação exploratória e prototipagem
+│   ├── EDA_DataPrep.ipynb   # Análise exploratória e preparação de dados
+│   ├── Train.ipynb          # Experimentação de treinamento do modelo
+│   └── Predict.ipynb        # Testes de inferência e validação
+├── src/                     # Código-fonte da aplicação e do modelo
+│   ├── api/                 # Endpoint de serviço (FastAPI)
+│   │   └── main.py          # Script principal da API
+│   └── training/            # Scripts de treinamento produtivo
+│       └── train.py         # Lógica de treinamento e versionamento do modelo
+├── terraform/               # Infraestrutura como Código (IaC) na AWS
+│   ├── ecr.tf               # Repositório de imagens Docker (Elastic Container Registry)
+│   ├── lambda.tf            # Configuração do processamento Serverless
+│   ├── gateway.tf           # Configuração do API Gateway para acesso externo
+│   └── mlflow.tf            # Infraestrutura para rastreamento de experimentos
+├── tests/                   # Suíte de testes automatizados
+│   ├── unit/                # Testes de funções e componentes isolados
+│   └── integration/         # Testes de fluxo ponta a ponta (E2E)
+├── Dockerfile               # Configuração da imagem para deploy do container
+├── requirements.txt         # Dependências do projeto (Python)
+└── README.md                # Documentação principal do projeto
 ```
 
-ou monte o servidor dentro da própria AWS (ex.: ECS/Fargate, EC2) usando as mesmas URIs. em qualquer caso o bucket retornado por `terraform output` servirá como destino de artefatos.
+## 🛠️ Pré-processamento e engenharia de features
 
-> **Exemplo de implantação na nuvem (ECS / Fargate)**
->
-> 1. **Criar imagem Docker** com MLflow:
->    ```dockerfile
->    FROM python:3.11-slim
->    RUN pip install mlflow boto3
->    # opcional: inclua awscli ou outras dependências
->    CMD ["mlflow", "server", "--backend-store-uri", "sqlite:///mlflow.db", \
->           "--default-artifact-root", "s3://<BUCKET>", "--host", "0.0.0.0", "--port", "5000"]
->    ```
->
-> 2. **Push da imagem** para o ECR na conta 488081132204 (região sa-east-1):
->    ```bash
->    aws ecr create-repository --repository-name mlflow-server --region sa-east-1
->    $(aws ecr get-login-password --region sa-east-1 | docker login --username AWS --password-stdin 488081132204.dkr.ecr.sa-east-1.amazonaws.com)
->    docker build -t mlflow-server:latest .
->    docker tag mlflow-server:latest 488081132204.dkr.ecr.sa-east-1.amazonaws.com/mlflow-server:latest
->    docker push 488081132204.dkr.ecr.sa-east-1.amazonaws.com/mlflow-server:latest
->    ```
->
-> 3. **Criar cluster ECS/Fargate** (Terraform ou Console) e uma task definition usando a imagem acima, reservando porta 5000. Configure IAM role que permita `s3:GetObject/PutObject` no bucket `mlflow_bucket_name`.
->
-> 4. **Provisionar um Application Load Balancer** apontando para o serviço, com listeners em 80/443 e regras para encaminhar ao container.
->
-> 5. **Configurar variáveis de ambiente** na task: `AWS_REGION=sa-east-1`, `MLFLOW_S3_ENDPOINT_URL=https://s3.sa-east-1.amazonaws.com` (se necessário).
->
-> 6. **Acessar a interface** via ALB DNS (ex.: `http://mlflow.example.com`) e use as credenciais IAM/Federation se quiser restringir.
->
-> 7. **Opcional:** automatize o deploy com Terraform e `aws_ecs_service`, `aws_ecs_task_definition`, `aws_lb`, etc. A infra do projeto já contém providers e variáveis de região/conta.
->
-> Em ambiente EC2 a ideia é semelhante: suba instância com a imagem acima ou instale MLflow, configure as mesmas URIs e vincule o bucket, abrindo porta 5000 no SG.
+Pipeline de Tratamento e Padronização
 
-### 📌 Exemplo de Terraform para ECS/Fargate + ALB (porta 5000)
+O processo de limpeza e normalização foi centralizado no notebook EDA_DataPrep.ipynb, envolvendo as seguintes operações:
 
-Se quiser automatizar todo o deploy na AWS, inclua um arquivo extra (`terraform/ecs_mlflow.tf`) parecido com este:
+- **Saneamento de Dados:** Implementação de funções baseadas em Regex para remoção de acentos e caracteres especiais, além da normalização de colunas de texto (como "Nome").
+- **Tipagem e Codificação** Conversão de tipos primitivos para float e aplicação de técnicas de encoding para variáveis categóricas.
+- **Governança de Colunas:** Utilização de mapeamento "de-para" para garantir a consistência das features entre diferentes anos letivos.
+- **Otimização de Armazenamento:** Persistência dos dados em formato Parquet, otimizando a leitura colunar e reduzindo o consumo de memória durante o treinamento.
 
-```hcl
-provider "aws" {
-  region = var.aws_region
-}
+Análise Estatística e Seleção
 
-resource "aws_ecs_cluster" "mlflow" {
-  name = "mlflow-cluster"
-}
+Para validar a relevância das variáveis em relação ao alvo (EVASAO), foram aplicados métodos de análise de dependência:
 
-resource "aws_ecs_task_definition" "mlflow" {
-  family                   = "mlflow-task"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
+- **Correlação de Pearson:** Utilizada para avaliar a relação linear entre as features numéricas.
+- **Correlação Point-Biserial:** Aplicada para medir a associação entre variáveis contínuas e o target binário de evasão.
 
-  container_definitions = jsonencode([{
-    name      = "mlflow-server"
-    image     = "488081132204.dkr.ecr.sa-east-1.amazonaws.com/mlflow-server:latest"
-    essential = true
-    portMappings = [{
-      containerPort = 5000
-      hostPort      = 5000
-      protocol      = "tcp"
-    }]
-  }])
-}
+Governança com Feature Store (Feast)
 
-resource "aws_lb" "mlflow" {
-  name               = "mlflow-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = var.public_subnets
-}
+Para garantir a consistência entre o treinamento e a inferência, implementamos um Feature Store utilizando a biblioteca Feast:
 
-resource "aws_lb_target_group" "mlflow" {
-  name     = "mlflow-tg"
-  port     = 5000
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
-  health_check {
-    path                = "/"
-    protocol            = "HTTP"
-    matcher             = "200-399"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-  }
-}
+- **Feature View (aluno_features):** Centraliza as definições do esquema de dados, servindo como a "fonte da verdade" para o projeto.
+- **Offline Store:** Utilizada pelo script train.py para recuperação de dados históricos de forma organizada.
+- **Online Store:** Utilizada pelo predict.py para servir as features com baixa latência durante a inferência na API.
+- **Arquivos de Configuração:** A implementação completa está disponível no diretório feature_repo/ através dos arquivos feature_store.yaml e feature_definitions.py.
 
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.mlflow.arn
-  port              = "80"
-  protocol          = "HTTP"
 
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.mlflow.arn
-  }
-}
+## 🚀 Treinamento e experimentação de modelos
 
-resource "aws_ecs_service" "mlflow" {
-  name            = "mlflow-service"
-  cluster         = aws_ecs_cluster.mlflow.id
-  task_definition = aws_ecs_task_definition.mlflow.arn
-  launch_type     = "FARGATE"
-  desired_count   = 1
 
-  network_configuration {
-    subnets         = var.private_subnets
-    security_groups = [aws_security_group.ecs.id]
-    assign_public_ip = true
-  }
+O processo de treinamento foi desenhado para ser robusto, auditável e automatizado, garantindo que o melhor modelo seja selecionado com base em dados de validação reais e não apenas em dados sintéticos.
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.mlflow.arn
-    container_name   = "mlflow-server"
-    container_port   = 5000
-  }
+## 1. Preparação e Balanceamento de Dados
+Para lidar com o desbalanceamento inerente ao problema de evasão, o pipeline executa os seguintes passos:
 
-  depends_on = [aws_lb_listener.http]
-}
-```
+- **Recuperação via Feast:** As features históricas são recuperadas do Feature Store utilizando o RA e a data de registro como chaves de entidade.
+- **Separação de Validação Real:** Reservamos 10% dos dados originais (não balanceados) para compor um conjunto de Validação Real. Isso garante que a métrica final reflita o desempenho do modelo no cenário real da Associação.
+- **Data Augmentation (SMOTE):** Aplicamos a técnica Synthetic Minority Over-sampling Technique para balancear as classes no conjunto de treino, gerando um dataset equilibrado de 10.000 registros (50% evasão / 50% permanência).
 
-Esses recursos criam o cluster, a task com a imagem ECR, o ALB público (listener porta 80) e o serviço que registra o container no target group. Ajuste as variáveis `vpc_id`, `public_subnets`, `private_subnets` e os grupos de segurança conforme sua rede.
+## 2. Ciclo de Experimentação (GridSearchCV)
+Implementamos uma rotina de busca de hiperparâmetros para três diferentes algoritmos, buscando a melhor performance em F1-Score:
 
-Depois de aplicar o Terraform, obtenha o DNS do ALB (`aws lb describe-load-balancers`) e acesse-o no navegador. Qualquer requisição HTTP será roteada à porta 5000 do container.
+- **K-Nearest Neighbors (KNN):** Ajuste de vizinhos e pesos.
+- **Regressão Logística:** Otimização de regularização (L1/L2) e penalidades.
+- **Random Forest:** Ajuste de profundidade, número de árvores e amostras por folha.
 
----
->
-Em seguida acesse `http://localhost:5000` ou o endereço público e abra o experimento `evasao_experiment` (ou o nome definido via `MLFLOW_EXPERIMENT`).
+## 3. Rastreamento e MLOps com MLflow
+O projeto utiliza o MLflow para governança completa do ciclo de vida:
 
-O painel de **drift** já é gerado no treino e publicado no próprio run do MLflow em `Artifacts > drift`:
+- **Tracking:** Registro automático de parâmetros, métricas de cada modelo e artefatos gerados.
+- **Model Registry:** O melhor modelo é encapsulado em um Pipeline (contendo o scaler e o estimador) e registrado como um artefato pronto para produção.
+- **Monitoramento de Data Drift:** Implementamos o cálculo do PSI (Population Stability Index). O pipeline compara a distribuição dos dados de treino (referência) com os de validação (atual) e gera um Painel de Drift HTML dentro do MLflow para alertar sobre mudanças no comportamento das features ao longo do tempo.
 
-- `drift_panel.html`: tabela visual com PSI por feature e nível (`baixo`, `moderado`, `alto`)
-- `drift_summary.csv`: dados tabulares para análises adicionais
+## 4. Persistência em Nuvem (AWS S3)
+Após a validação, o melhor estimador é serializado com joblib e enviado automaticamente para um bucket no Amazon S3 (tc5-mlops-artifacts). Este artefato é o que será consumido pela API no momento do deploy, garantindo o desacoplamento entre o treinamento e a inferência.
 
-Além dos artifacts, as métricas também ficam em `Metrics` no run (`drift_avg_psi`, `drift_max_psi`, `drift_psi_<feature>`).
 
-> ⚠️ **Conta AWS / Região**: use as credenciais da conta `488081132204` e configure a região `us-east-1` antes de rodar o Terraform ou qualquer comando AWS. Por exemplo:
->
-> ```bash
-> export AWS_PROFILE=datathon
-> export AWS_REGION=us-east-1
-> terraform -chdir=terraform apply -var="aws_region=us-east-1"
-> ```
+## 🧪 Testes
 
-## 🚀 Fluxo de Operação
+Rodar testes unitários e de integração básica:
 
-### 1. Infraestrutura (Terraform)
+      pytest
 
-O provisionamento da AWS é automatizado. O estado do Terraform (`tfstate`) é armazenado remotamente no S3 para permitir colaboração e segurança.
+Rodar testes com cobertura de código:
 
-```bash
-cd terraform
-terraform init -migrate-state
-terraform apply
-```
+      pytest --cov=src --cov=feature_repo
 
-### 2. Pipeline de Treinamento & Upload
+Observações:
 
-O script de treino consome dados via Feast, executa GridSearchCV e envia o melhor modelo (`.joblib`) automaticamente para o bucket S3.
+Os testes usam pytest e estão organizados em tests/unit e tests/integration.
 
-**Diferencial:** o melhor modelo é selecionado via **F1-Score** em um set de validação real.
+## 📊 Monitoramento com MLflow
 
-```bash
-python src/training/train.py
-```
+Para a rastreabilidade e governança do ciclo de vida do modelo, foi utilizado MLflow com registro de métricas, parâmetros e artefatos integrados com CloudWatch AWS, com isso registra a **predições e características** para monitoramento Real Time Data e Smoke.
 
-### 3. Deploy da API (Serverless Docker)
+**Etapas:**
 
-A API é empacotada em um container Docker e enviada para o AWS ECR.
+1. **Configuração do tracking:** definir `MLFLOW_TRACKING_URI` e conectar o armazenamento de artefatos.
+2. **Execução do treino:** iniciar o pipeline (`src/training/train.py`) para registrar hiperparâmetros, F1-score e o melhor pipeline treinado.
+3. **Registro de drift:** publicar artefatos de monitoramento (`drift_panel.html` e `drift_summary.csv`)
+4. **Acompanhamento contínuo:** abrir a UI do MLflow e validar runs, métricas de desempenho e sinais de desvio de distribuição. As métricas ficam em `Metrics` no run (`drift_avg_psi`, `drift_max_psi`, `drift_psi_<feature>`).
 
-```bash
-# Build focado na arquitetura do Lambda (AMD64)
-docker build --platform linux/amd64 --provenance=false -t [ECR_URI]:latest .
-docker push [ECR_URI]:latest
-
-# Atualização da função
-aws lambda update-function-code --function-name tc5-prediction-api --image-uri [ECR_URI]:latest --region us-east-1
-```
-
-### 4. Funcionamento da API na Nuvem
-
-- **Startup dinâmico:** ao iniciar, a API lista o bucket S3, identifica o modelo mais recente e o carrega em memória.
-- **Escrita em runtime:** para contornar a natureza read-only do Lambda, a API clona o repositório do Feast para a pasta `/tmp` no boot, garantindo permissão de escrita para locks do SQLite.
-
----
-
-## 📈 Resultados do Modelo
-
-O pipeline de treinamento avaliou múltiplos modelos, obtendo o seguinte desempenho na validação real:
-
-| Modelo                  | F1-Score | Observação                       |
-| ----------------------- | -------- | -------------------------------- |
-| **Regressão Logística** | ~0,73    | Modelo selecionado para produção |
-| KNN                     | ~0,52    | —                                |
-| Random Forest           | ~0,44    | —                                |
-
----
-
-## 🛠️ Endpoints Principais
-
-| Método   | Endpoint   | Descrição                                                              |
-| -------- | ---------- | ---------------------------------------------------------------------- |
-| **POST** | `/predict` | Envia o RA do aluno e recebe a predição de evasão e as probabilidades. |
-| **GET**  | `/docs`    | Documentação interativa Swagger (acessível via API Gateway).           |
-
-## 📊 Monitoramento Contínuo
-
-A aplicação publica logs e métricas para facilitar o acompanhamento e
-identificação de drift do modelo. Tudo é enviado para a conta AWS **488081132204**
-na região **sa-east-1** (Brasil).
-
-1. **Logs**
-   - O Lambda utiliza o `logging` padrão do Python; mensagens de `logger.info`/
-     `logger.error` aparecem automaticamente no *CloudWatch Logs* no grupo
+5. **Logs:** 
+   - Coletados os logs no *CloudWatch Logs* no grupo
      `/aws/lambda/tc5-prediction-api`.
-   - O Terraform já cria o grupo e define retenção de 7 dias.
+   - O Terraform provisiona o grupo com definição de retenção de 30 dias.
 
-2. **Métricas customizadas**
+6. **Métricas customizadas**
    - A cada chamada ao endpoint `/predict` são enviados dados para o namespace
      `TC5/Model` (valor da predição e contagem) e `TC5/ModelFeatures`
      (valores de entrada) usando `cloudwatch.put_metric_data`.
    - Essas métricas permitem montar gráficos simples e detectar mudanças na
      distribuição ao longo do tempo.
 
-3. **Dashboard de drift**
-   - O `terraform` provisiona um *CloudWatch Dashboard* chamado
-     `tc5-model-monitoring` com um widget para visualizar a média e o volume de
+3. **Dashboard de CloudWatch**
+   - O `tc5-model-monitoring` com um widget para visualizar a média e o volume de
      previsões.
-   - A qualquer momento acesse
-     `https://console.aws.amazon.com/cloudwatch/home?region=sa-east-1#dashboards:
-     name=tc5-model-monitoring` (ajuste a conta/URL conforme necessário).
+   -  `https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:
+     name=tc5-model-monitoring`
 
-4. **Extensões e melhorias**
-   - É possível adicionar um *CloudWatch Event Rule* / *Lambda agendado* para
-     calcular métricas de drift mais sofisticadas (p.ex. Kullback‑Leibler ou
-     KS) a partir das métricas já publicadas.
-   - Qualquer alarme ou *dashboard* adicional pode ser definido via Terraform
-     ou manualmente na console.
+**Ferramentas utilizadas:** MLflow,CloudWatch, Scikit-Learn, Python, AWS S3 (artefatos),IAM role.
 
----
+**Link de acesso:** [evasao_experiment](http://tc5-mlflow-alb-936417363.us-east-1.elb.amazonaws.com/#/experiments/1/runs?searchFilter=&orderByKey=attributes.start_time&orderByAsc=false&startTime=ALL&lifecycleFilter=Active&modelVersionFilter=All+Runs&datasetsFilter=W10%3D)
 
----
+## 📈 Observabilidade com Grafana
 
-## 🤖 Automação CI/CD (GitHub Actions)
+O monitoramento operacional da API é realizado com Grafana integrado ao CloudWatch.
 
-O projeto está configurado para deploy automático via GitHub Actions sempre que houver um push na branch `main`, automatizando o ciclo de **Build**, **Push** e **Update** no ambiente AWS.
+1. **Provisionamento:** criar infraestrutura com Terraform e habilitar o workspace Grafana.
+2. **Acesso via SSO:** autenticar pelo AWS IAM Identity Center, associar usuário/grupo e atribuir perfil `Admin` ou `Editor`.
+3. **Integração de dados:** usar datasource `CloudWatch` para métricas de API Gateway e Lambda.
+4. **Logs no dashboard:** habilitar consultas de CloudWatch Logs Insights para análise por `requestId`.
 
----
+**Permissões mínimas para métricas e logs:**
+- `cloudwatch:GetMetricData`, `cloudwatch:GetMetricStatistics`, `cloudwatch:ListMetrics`
+- `logs:DescribeLogGroups`, `logs:DescribeLogStreams`, `logs:GetLogEvents`
+- `logs:StartQuery`, `logs:GetQueryResults`, `logs:GetLogGroupFields`
 
-## ✅ Testes Automatizados
+**Ferramentas utilizadas:** Grafana, AWS IAM Identity Center, Amazon CloudWatch (Metrics e Logs Insights) e Terraform.
+- Conta AWS: `4880********2204`
+- Login local Grafana OSS (quando aplicável): usuário `admin` / senha `adm*****23`
 
-- **Rodar testes unitários e de integração básica**:
+**Link de acesso:** [tc5-api-observability](http://localhost:3000/d/tc5-api-observability/tc5-api-observability?orgId=1&from=now-1h&to=now&timezone=browser&var-aws_region=us-east-1&var-api_id=kt97nlxbf6&var-lambda_function_name=tc5-prediction-api&var-aws_account_id=488081132204&var-apigw_log_group_name=%2Faws%2Fapigateway%2Ftc5-ml-gateway&refresh=30s)
+
+## 📊 Resultados
+
+O projeto consolidou um ecossistema **MLOps ponta a ponta**. No aspecto de modelagem, a combinação de janelas temporais com a técnica de balanceamento **SMOTE** e a otimização de hiperparâmetros (via `GridSearchCV`) resultou em um modelo classificador com **alto F1-Score**. A otimização desta métrica garante um equilíbrio ideal entre *Precision* e *Recall*, minimizando falsos positivos e maximizando a detecção de alunos com probabilidade real de evasão.
+
+Do ponto de vista de arquitetura de produção e engenharia:
+- **Inferência Escalável e de Baixa Latência:** O deploy via AWS Lambda com FastAPI e Docker garante que as predições ocorram em tempo real, cobrando apenas pelo tempo de computação estritamente utilizado.
+- **Governança de Features:** A integração e centralização utilizando **Feast** (Feature Store) padroniza a entrega de informações tanto para treinamento quanto para inferência.
+- **Monitoramento e Observabilidade:** O pipeline automatizado usando **MLflow** para detectar mudanças de distribuição (*Data Drift* via PSI) aliado ao **Grafana / CloudWatch** assegura visibilidade contínua sobre a saúde técnica e estatística da solução.
+
+O resultado final não é apenas um modelo preditivo robusto; é uma ferramenta estratégica e sustentável que identifica rapidamente quem está em vulnerabilidade educacional. Isso otimiza o direcionamento de recursos da Passos Mágicos para onde eles são mais necessários: no futuro desses jovens. Transformamos dados em ação social.
+
+## 🚀 Como Executar (Reprodução)
+
+O projeto está configurado para deploy automático da infraestrutura via GitHub Actions usando Terraform. Abaixo o guia rápido para você executar via CI/CD no Mac ou Windows:
+
+### 1. Clone o projeto
 
 ```bash
-pytest
+git clone <URL_DO_SEU_REPOSITORIO>
+cd tc5-datathon
 ```
 
-- **Rodar testes com cobertura de código**:
+### 2. Crie as variáveis no GitHub Actions
+
+O pipeline automatizado do GitHub necessita de credenciais de um usuário IAM com acesso administrador (ou permissões para Lambda, ECR, API Gateway, S3, IAM, CloudWatch).
+Vá em `Settings > Secrets and variables > Actions > New repository secret` no GitHub e crie os seguintes "secrets":
+- `AWS_ACCESS_KEY_ID`: Sua Access Key Account principal.
+- `AWS_SECRET_ACCESS_KEY`: Sua Secret Key.
+
+*(O deploy está por padrão apontando para a região `us-east-1` e os recursos ECS usam contas da região `sa-east-1` conforme script de infraestrutura.)*
+
+### 3. Suba a Infraestrutura (Push para a nuvem ou roteamento local com `act`)
+
+**Push para Branch Principal**
+Faça push de qualquer atualização diretamente no GitHub:
+```bash
+git switch main
+git push origin main
+```
+Isso acionará os jobs automatizados de Testes -> Treino (envio pro S3) -> Terraform (Criação Lambda + API).
+
+### 4. Acesse o link (Swagger API)
+
+Após a etapa do Actions ser concluída com sucesso (seja via web ou act local), o Terraform terá disponibilizado a URL do API Gateway. 
+Você pode visualizá-la diretamente checando o painel do API Gateway na nuvem AWS, ou pelo console, através do output:
 
 ```bash
-pytest --cov=src --cov=feature_repo
+cd terraform
+terraform output 
 ```
 
-Observações:
+Encontre a URL base da API e acesse-a no navegador através da raiz terminada em `/docs` para abrir o Swagger Serverless (Exemplo: `https://[ID].execute-api.us-east-1.amazonaws.com/docs`). 
 
-- Os testes usam `pytest` e estão organizados em `tests/unit` e `tests/integration`.
-- O teste de integração da API (`tests/integration/test_api_predict_integration.py`) fica marcado como `skip` por padrão, pois depende de acesso real ao S3 e ao Feast configurado. Remova o `@pytest.mark.skip` quando o ambiente estiver pronto.
+
+
+## Vídeo de Apresentação no Youtube (Modelo LSTM)
+Para melhor compreensão da entrega , foi produzido um vídeo de apresentação no Youtube:
+
+[Link para a Vídeo](https://link.com.br)
+
+
+## ✒️ Autores
+
+| Nome                            |   RM    | Link do GitHub                                      |
+|---------------------------------|---------|-----------------------------------------------------|
+| Ana Paula de Almeida            | 363602  | [GitHub](https://github.com/Ana9873P)               |
+| Augusto do Nascimento Omena     | 363185  | [GitHub](https://github.com/AugustoOmena)           |
+| Bruno Gabriel de Oliveira       | 361248  | [GitHub](https://github.com/brunogabrieldeoliveira) |
+| José Walmir Gonçalves Duque     | 363196  | [GitHub](https://github.com/WALMIRDUQUE)            |
+
+## 📄 Licença
+
+Este projeto está licenciado sob a Licença MIT.  
+Consulte o arquivo [license](docs/license/license.txt)  para mais detalhes.
