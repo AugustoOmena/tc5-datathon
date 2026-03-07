@@ -252,6 +252,7 @@ def run_training():
         "EVASAO",
         "DESTAQUE_IEG",
         "CG",
+        "RA",
         "CT",
         "DESTAQUE_IPV",
         "DESTAQUE_IDA",
