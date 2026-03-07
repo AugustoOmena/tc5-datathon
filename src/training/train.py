@@ -18,7 +18,6 @@ import io
 
 # MLflow for experiment tracking (drift monitoring will be based on logged runs)
 import mlflow
-import mlflow.sklearn
 
 MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
 mlflow.set_tracking_uri(MLFLOW_URI)
@@ -41,6 +40,39 @@ def save_model_to_s3(pipeline, model_name):
         print(f"Sucesso! Melhor modelo ({model_name}) salvo no S3 em: s3://{bucket_name}/{s3_key}")
     except Exception as e:
         print(f"Erro ao salvar no S3: {e}")
+
+
+def save_inference_data_to_s3(df, bucket_name="tc5-mlops-artifacts-f4d7a3e1", prefix="data/"):
+    if df is None or df.shape[0] == 0:
+        print("Nenhum dado de inferência para salvar (df vazio).")
+        return
+
+    if "EVASAO" not in df.columns:
+        print("Coluna 'EVASAO' não encontrada no dataframe de inferência. Nada salvo.")
+        return
+
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    s3_client = boto3.client("s3")
+
+    subsets = {
+        "evasao": df[df["EVASAO"] == 1],
+        "nao_evasao": df[df["EVASAO"] == 0],
+    }
+
+    for name, subset in subsets.items():
+        if subset.empty:
+            print(f"Subset {name} vazio — pulando upload.")
+            continue
+
+        key = f"{prefix}df_inference_{name}_{timestamp}.csv"
+
+        try:
+            csv_buffer = io.StringIO()
+            subset.to_csv(csv_buffer, index=False)
+            s3_client.put_object(Bucket=bucket_name, Key=key, Body=csv_buffer.getvalue().encode("utf-8"))
+            print(f"Sucesso! Dados de inferência ({name}) salvos em: s3://{bucket_name}/{key}")
+        except Exception as e:
+            print(f"Erro ao salvar dados de inferência ({name}) no S3: {e}")
 
 
 model_params = {
@@ -239,6 +271,13 @@ def run_training():
     df_val_nao_evasao = train_df[train_df["EVASAO"] == 0].sample(n=n_per_class, random_state=42)
 
     df_val = pd.concat([df_val_evasao, df_val_nao_evasao]).sample(frac=1, random_state=42)
+
+    # Salvar 10% dos dados de inferência no S3, separados por EVASAO / NAO_EVASAO
+    try:
+        save_inference_data_to_s3(df_val)
+    except Exception as e:
+        print(f"Erro ao tentar salvar dados de inferência no S3: {e}")
+
     df_treino_original = train_df.drop(df_val.index)
 
     X_restante = df_treino_original.drop("EVASAO", axis=1)
