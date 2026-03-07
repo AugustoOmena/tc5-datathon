@@ -105,18 +105,48 @@ async def predict(request: PredictRequest):
         raise HTTPException(status_code=503, detail="Serviço indisponível: artefatos não carregados.")
 
     try:
+        # tenta obter as features pelo Feast; se não existir a FeatureService/FeatureView,
+        # cai para um fallback que lê o parquet local em feature_repo/data
         try:
-            feature_refs = store.get_feature_service("aluno_service")
-        except Exception as fs_err:
-            logger.warning(f"Feature service 'aluno_service' não encontrada; usando referências explícitas de features. Detalhe: {fs_err}")
-            feature_refs = [f"aluno_features:{f}" for f in FEATURES_MODEL]
+            try:
+                feature_refs = store.get_feature_service("aluno_service")
+            except Exception as fs_err:
+                logger.warning(f"Feature service 'aluno_service' não encontrada; usando referências explícitas de features. Detalhe: {fs_err}")
+                feature_refs = [f"aluno_features:{f}" for f in FEATURES_MODEL]
 
-        feature_vector = store.get_online_features(
-            features=feature_refs,
-            entity_rows=[{"RA": request.ra}]
-        ).to_dict()
+            feature_vector = store.get_online_features(
+                features=feature_refs,
+                entity_rows=[{"RA": request.ra}]
+            ).to_dict()
 
-        input_df = pd.DataFrame.from_dict(feature_vector)
+            input_df = pd.DataFrame.from_dict(feature_vector)
+
+        except Exception as fe_err:
+            # fallback: ler parquet local do feature_repo
+            logger.warning(f"Falha ao obter features via Feast: {fe_err}. Tentando fallback local (parquet).")
+            parquet_path = REPO_PATH / "data" / "df_evasao_escolar.parquet"
+            if not parquet_path.exists():
+                raise HTTPException(status_code=500, detail=f"Erro na predição: Falha ao obter features via Feast e arquivo local não encontrado ({parquet_path})")
+
+            df_all = pd.read_parquet(parquet_path)
+            if "RA" not in df_all.columns:
+                raise HTTPException(status_code=500, detail="Erro na predição: arquivo local de features não contém a coluna 'RA'.")
+
+            rows = df_all[df_all["RA"] == request.ra]
+            if rows.empty:
+                raise HTTPException(status_code=404, detail=f"Aluno {request.ra} não encontrado no Feature Store local.")
+
+            # selecionar a linha mais recente se houver campo de timestamp
+            if "DATA_REGISTRO" in rows.columns:
+                row = rows.sort_values("DATA_REGISTRO").iloc[-1]
+            else:
+                row = rows.iloc[-1]
+
+            available_feats = [f for f in FEATURES_MODEL if f in row.index]
+            if not available_feats:
+                raise HTTPException(status_code=500, detail="Erro na predição: nenhuma das features esperadas foi encontrada no registro local.")
+
+            input_df = pd.DataFrame([row[available_feats]])
 
         features_model = [
             "DESTAQUE_IEG", "CG", "CT", "DESTAQUE_IPV", "DESTAQUE_IDA",
