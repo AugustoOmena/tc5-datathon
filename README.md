@@ -97,6 +97,18 @@ TC5-DATATHON-MAIN
 │   ├── data/                # Armazenamento local de dados/parquets
 │   ├── feature_definitions.py # Definição de entidades e visualizações de features
 │   └── feature_store.yaml   # Configuração do ambiente do Feature Store
+├── monitoring/              # Monitoramento
+│   ├── grafana/             # Aplicação de monitoramento
+│   └── dashboards/          # Script do dash
+│   └── tc5-api-observability.json # Estrutura do dash
+│   ├── provisioning/         # Provisiona as configurações do dash
+│   └── dashboards.yaml       # configurações como nome e path
+│   ├── datasources/          # datasources do dash
+│   └── datasource.yaml       # configurações do datasources
+│   ├── loki/                 # Source para o Grafana
+│   └── config.yaml           # configuração como server e schema_config
+│   ├── promtail/             #  coletor de logs 
+│   └── config.yaml           # scrape_configs
 ├── notebooks/               # Documentação exploratória e prototipagem
 │   ├── EDA_DataPrep.ipynb   # Análise exploratória e preparação de dados
 │   ├── Train.ipynb          # Experimentação de treinamento do modelo
@@ -109,11 +121,13 @@ TC5-DATATHON-MAIN
 ├── terraform/               # Infraestrutura como Código (IaC) na AWS
 │   ├── ecr.tf               # Repositório de imagens Docker (Elastic Container Registry)
 │   ├── lambda.tf            # Configuração do processamento Serverless
+|   ├── main.tf              # Configuração do processamento Serverless
 │   ├── gateway.tf           # Configuração do API Gateway para acesso externo
 │   └── mlflow.tf            # Infraestrutura para rastreamento de experimentos
 ├── tests/                   # Suíte de testes automatizados
 │   ├── unit/                # Testes de funções e componentes isolados
 │   └── integration/         # Testes de fluxo ponta a ponta (E2E)
+├── docker-compose           # Configuração da imagem para deploy do container
 ├── Dockerfile               # Configuração da imagem para deploy do container
 ├── requirements.txt         # Dependências do projeto (Python)
 └── README.md                # Documentação principal do projeto
