@@ -273,6 +273,10 @@ def run_training():
     df_val = pd.concat([df_val_evasao, df_val_nao_evasao]).sample(frac=1, random_state=42)
 
     # Salvar 10% dos dados de inferência no S3, separados por EVASAO / NAO_EVASAO
+    if "RA" not in df_val.columns and "RA" in retrieval_df.columns:
+        df_val = df_val.copy()
+        df_val["RA"] = retrieval_df.loc[df_val.index, "RA"].values
+
     try:
         save_inference_data_to_s3(df_val)
     except Exception as e:
