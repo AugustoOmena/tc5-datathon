@@ -124,6 +124,30 @@ def test_run_training_logs_to_mlflow(monkeypatch):
             @staticmethod
             def log_model(model, artifact_path):
                 logs.append(("skmodel", artifact_path))
+    class DummySCV:
+        def __init__(self, *args, **kwargs):
+            self.best_params_ = {}
+            self.best_score_ = 1.0
+            
+            class DummyEstimator:
+                def predict(self, X):
+                    import numpy as np
+                    return np.zeros(len(X))
+                @property
+                def feature_importances_(self):
+                    import numpy as np
+                    return np.zeros(10)
+            self.best_estimator_ = DummyEstimator()
+
+        def fit(self, X, y):
+            return self
+
+        def predict(self, X):
+            return self.best_estimator_.predict(X)
+
+    monkeypatch.setattr(train_module, "GridSearchCV", DummySCV)
+    monkeypatch.setattr(train_module.joblib, "dump", lambda obj, path: None)
+    monkeypatch.setattr(train_module, "save_model_to_s3", lambda p, n: None)
     monkeypatch.setattr(train_module, "mlflow", DummyMLflow())
 
     # run training (should not error with minimal data)
