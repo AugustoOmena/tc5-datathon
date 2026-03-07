@@ -18,6 +18,9 @@ venv.bak/
 dist/
 build/
 .venv
+.env
+.env.*
+!.env.example
 
 # Pytest
 .cache

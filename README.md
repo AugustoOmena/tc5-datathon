@@ -226,7 +226,7 @@ Para a rastreabilidade e governança do ciclo de vida do modelo, foi utilizado M
 
 ## 📈 Observabilidade com Grafana
 
-O monitoramento operacional da API é realizado com Grafana integrado ao CloudWatch.
+O monitoramento operacional da API é realizado com Grafana integrado com Loki e Promtail (via Docker Compose)
 
 1. **Provisionamento:** criar infraestrutura com Terraform e habilitar o workspace Grafana.
 2. **Acesso via SSO:** autenticar pelo AWS IAM Identity Center, associar usuário/grupo e atribuir perfil `Admin` ou `Editor`.
@@ -238,11 +238,46 @@ O monitoramento operacional da API é realizado com Grafana integrado ao CloudWa
 - `logs:DescribeLogGroups`, `logs:DescribeLogStreams`, `logs:GetLogEvents`
 - `logs:StartQuery`, `logs:GetQueryResults`, `logs:GetLogGroupFields`
 
-**Ferramentas utilizadas:** Grafana, AWS IAM Identity Center, Amazon CloudWatch (Metrics e Logs Insights) e Terraform.
-- Conta AWS: `4880********2204`
-- Login local Grafana OSS (quando aplicável): usuário `admin` / senha `adm*****23`
+**Ferramentas utilizadas:** Grafana, Terraform,metrics e Logs Insights.
+- Login Grafana OSS
 
-**Link de acesso:** [tc5-api-observability](http://localhost:3000/d/tc5-api-observability/tc5-api-observability?orgId=1&from=now-1h&to=now&timezone=browser&var-aws_region=us-east-1&var-api_id=kt97nlxbf6&var-lambda_function_name=tc5-prediction-api&var-aws_account_id=488081132204&var-apigw_log_group_name=%2Faws%2Fapigateway%2Ftc5-ml-gateway&refresh=30s)
+**Link de acesso:** ([tc5-api-observability](http://localhost:3000/d/tc5-api-observability/tc5-api-observability?orgId=1&refresh=30s))
+
+### Observabilidade via Docker Compose (Loki + Promtail)
+
+Stack para monitorar logs da API em tempo real:
+
+- `docker-compose.yml` com serviços `api`, `loki`, `promtail` e `grafana`
+- `monitoring/loki/config.yaml`
+- `monitoring/promtail/config.yaml`
+- `monitoring/grafana/provisioning/datasources/datasource.yaml`
+- `monitoring/grafana/provisioning/dashboards/dashboards.yaml`
+- `monitoring/grafana/dashboards/tc5-api-observability.json`
+
+#### Provisionar
+
+1. Crie o arquivo de ambiente local com as credenciais mascaradas no repositório:
+
+```bash
+cp .env.example .env
+```
+
+2. `.env` com:
+- `GRAFANA_ADMIN_PASSWORD`
+- credenciais AWS (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` e opcionalmente `AWS_SESSION_TOKEN`) com acesso ao bucket de artefatos
+- `ALLOW_STARTUP_WITHOUT_ARTIFACTS=false` para o endpoint `/predict` funcionar carregando modelo
+
+3. Suba a stack:
+```bash
+docker compose up -d --build
+```
+
+O dashboard provisionado `TC5 API Observability` paineis 
+- `Erros HTTP 503 (5m)`
+- `Stream De Erros 503`
+- `Latencia API`
+- `Stream De logs`
+
 
 ## 📊 Resultados
 
