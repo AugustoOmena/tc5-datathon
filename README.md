@@ -101,6 +101,9 @@ TC5-DATATHON-MAIN
 │   ├── EDA_DataPrep.ipynb   # Análise exploratória e preparação de dados
 │   ├── Train.ipynb          # Experimentação de treinamento do modelo
 │   └── Predict.ipynb        # Testes de inferência e validação
+├── docs/                    # Documentação adicional / materiais externos
+│   ├── Anotações Importantes.docx
+│   └── Construção do Dataset para Modelo de Classificação de Evasão.docx
 ├── src/                     # Código-fonte da aplicação e do modelo
 │   ├── api/                 # Endpoint de serviço (FastAPI)
 │   │   └── main.py          # Script principal da API
