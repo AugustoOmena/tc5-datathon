@@ -139,8 +139,14 @@ async def predict(request: PredictRequest):
         raise HTTPException(status_code=503, detail="Serviço indisponível: artefatos não carregados.")
 
     try:
+        try:
+            feature_refs = store.get_feature_service("aluno_service")
+        except Exception as fs_err:
+            logger.warning(f"Feature service 'aluno_service' não encontrada; usando referências explícitas de features. Detalhe: {fs_err}")
+            feature_refs = [f"aluno_features:{f}" for f in FEATURES_MODEL]
+
         feature_vector = store.get_online_features(
-            features=store.get_feature_service("aluno_service"),
+            features=feature_refs,
             entity_rows=[{"RA": request.ra}]
         ).to_dict()
 

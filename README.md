@@ -2,7 +2,6 @@
 
 Para o Datathon, o desafio proposto foi o seguinte:
 
-
 📢 **Problema:**
 
 A Associação Passos Mágicos atua na transformação de vidas de crianças e jovens em vulnerabilidade social por meio de um modelo que integra educação de qualidade, apoio psicossocial e desenvolvimento pessoal. No entanto, essa missão enfrenta barreiras severas como a insegurança alimentar, o trabalho precoce e a defasagem idade-série, fatores que historicamente alimentam a evasão escolar no Brasil. A saída prematura do estudante não representa apenas uma perda estatística, mas a interrupção de um ciclo de aceleração do conhecimento e o distanciamento de oportunidades que poderiam romper a barreira da desigualdade social.
@@ -10,7 +9,6 @@ A Associação Passos Mágicos atua na transformação de vidas de crianças e j
 Nesse cenário, o desenvolvimento de um modelo preditivo torna-se uma ferramenta estratégica para a sustentabilidade do impacto social da organização. Ao analisar indicadores críticos como o INDE (Índice de Desenvolvimento Educacional) e suas dimensões de desempenho acadêmico e engajamento (IDA e IEG) — que juntos explicam cerca de 90% da variação do desenvolvimento dos alunos —, o modelo permite uma atuação preventiva. Identificar antecipadamente os perfis com maior risco de abandono possibilita que a equipe direcione intervenções personalizadas, garantindo que o suporte da Passos Mágicos não seja interrompido antes da transformação completa da realidade do aluno.
 
 ## 📌 Objetivos
-
 
 Desenvolver e operacionalizar um ecossistema de Machine Learning capaz de prever o risco de evasão escolar, permitindo intervenções preventivas e baseadas em dados. Para isso, os objetivos específicos incluem:
 
@@ -24,9 +22,7 @@ Desenvolver e operacionalizar um ecossistema de Machine Learning capaz de prever
 
 - **Reprodutibilidade e Storytelling:** Documentar todo o ciclo de vida do projeto, desde a análise exploratória até o deploy final, garantindo que a solução seja auditável e apresentando os resultados de forma estratégica para os stakeholders.
 
-
 ## 📌 Entregáveis
-
 
 - **Repositório de Código-Fonte:** Ambiente no GitHub com a estrutura completa do projeto, seguindo boas práticas de organização, versionamento e documentação do código (scripts de treinamento, processamento e infraestrutura).
 
@@ -39,10 +35,8 @@ Desenvolver e operacionalizar um ecossistema de Machine Learning capaz de prever
 - **Pipeline de CI/CD:** Automação do deploy via GitHub Actions, garantindo a entrega contínua e a integridade do ambiente produtivo.
 
 - **Apresentação Executiva (Vídeo):** Pitch de até cinco minutos com foco gerencial, apresentando o storytelling do problema, a arquitetura da solução e os resultados alcançados pelo modelo.
-  
 
 ## 📌 Desafios
-
 
 O desenvolvimento desta solução enfrentou desafios críticos inerentes a projetos de impacto social e engenharia de ML:
 
@@ -53,10 +47,8 @@ O desenvolvimento desta solução enfrentou desafios críticos inerentes a proje
 - **Escalabilidade e Custo Computacional:** O processamento de grandes volumes de dados brutos exigiu a estruturação de um pipeline eficiente para evitar latência e custos excessivos de nuvem durante o treinamento e a inferência.
 
 - **Orquestração do Deploy:** Configurar um fluxo de CI/CD via GitHub Actions para a AWS que garanta que o modelo em produção seja sempre o de melhor performance, sem interromper a disponibilidade da API.
-  
 
 ## 📌 Proposta de solução
-
 
 A solução proposta consiste no desenvolvimento de um ecossistema de Machine Learning de ponta a ponta (end-to-end), projetado para identificar precocemente alunos com alto risco de evasão escolar. A inteligência do modelo baseia-se em uma arquitetura de dados temporal, permitindo que a organização atue de forma preventiva antes que o desligamento do aluno se concretize.
 
@@ -72,7 +64,6 @@ A solução está estruturada nos seguintes pilares técnicos:
 
 Com essa abordagem, a Passos Mágicos obtém uma ferramenta capaz de correlacionar oscilações em indicadores críticos (como a mudança na cor da "Pedra" ou queda no INDE) com o risco iminente de evasão, transformando dados históricos em ações preventivas de impacto social.
 
-
 **Importante**
 
 Os arquivos **Datathon - Anotações Importantes.docx** e **Construção do Dataset para Modelo de Classificação de Evasão.docx** anexos a este repositório possuem uma série de informações compiladadas sobre a metodologia abordada pela Passos Mágicos, bem como, a lógica pensada para a construção do Dataset de treinamento dos modelos de Machine Learning.
@@ -85,7 +76,6 @@ Além disso, toda a implementação foi feita usando **Python e bibliotecas**, t
 - **Infraestrutura:** Terraform (IaC).
 - **Containerização:** Docker — imagem otimizada `linux/amd64` para AWS Lambda.
 - **Modelagem:** Scikit-Learn — pipelines de pré-processamento e modelos de classificação.
-
 
 ### 📂 Estrutura do projeto
 
@@ -113,6 +103,9 @@ TC5-DATATHON-MAIN
 │   ├── EDA_DataPrep.ipynb   # Análise exploratória e preparação de dados
 │   ├── Train.ipynb          # Experimentação de treinamento do modelo
 │   └── Predict.ipynb        # Testes de inferência e validação
+├── docs/                    # Documentação adicional / materiais externos
+│   ├── Anotações Importantes.docx
+│   └── Construção do Dataset para Modelo de Classificação de Evasão.docx
 ├── src/                     # Código-fonte da aplicação e do modelo
 │   ├── api/                 # Endpoint de serviço (FastAPI)
 │   │   └── main.py          # Script principal da API
@@ -160,13 +153,12 @@ Para garantir a consistência entre o treinamento e a inferência, implementamos
 - **Online Store:** Utilizada pelo predict.py para servir as features com baixa latência durante a inferência na API.
 - **Arquivos de Configuração:** A implementação completa está disponível no diretório feature_repo/ através dos arquivos feature_store.yaml e feature_definitions.py.
 
-
 ## 🚀 Treinamento e experimentação de modelos
-
 
 O processo de treinamento foi desenhado para ser robusto, auditável e automatizado, garantindo que o melhor modelo seja selecionado com base em dados de validação reais e não apenas em dados sintéticos.
 
 ## 1. Preparação e Balanceamento de Dados
+
 Para lidar com o desbalanceamento inerente ao problema de evasão, o pipeline executa os seguintes passos:
 
 - **Recuperação via Feast:** As features históricas são recuperadas do Feature Store utilizando o RA e a data de registro como chaves de entidade.
@@ -174,6 +166,7 @@ Para lidar com o desbalanceamento inerente ao problema de evasão, o pipeline ex
 - **Data Augmentation (SMOTE):** Aplicamos a técnica Synthetic Minority Over-sampling Technique para balancear as classes no conjunto de treino, gerando um dataset equilibrado de 10.000 registros (50% evasão / 50% permanência).
 
 ## 2. Ciclo de Experimentação (GridSearchCV)
+
 Implementamos uma rotina de busca de hiperparâmetros para três diferentes algoritmos, buscando a melhor performance em F1-Score:
 
 - **K-Nearest Neighbors (KNN):** Ajuste de vizinhos e pesos.
@@ -181,6 +174,7 @@ Implementamos uma rotina de busca de hiperparâmetros para três diferentes algo
 - **Random Forest:** Ajuste de profundidade, número de árvores e amostras por folha.
 
 ## 3. Rastreamento e MLOps com MLflow
+
 O projeto utiliza o MLflow para governança completa do ciclo de vida:
 
 - **Tracking:** Registro automático de parâmetros, métricas de cada modelo e artefatos gerados.
@@ -188,8 +182,8 @@ O projeto utiliza o MLflow para governança completa do ciclo de vida:
 - **Monitoramento de Data Drift:** Implementamos o cálculo do PSI (Population Stability Index). O pipeline compara a distribuição dos dados de treino (referência) com os de validação (atual) e gera um Painel de Drift HTML dentro do MLflow para alertar sobre mudanças no comportamento das features ao longo do tempo.
 
 ## 4. Persistência em Nuvem (AWS S3)
-Após a validação, o melhor estimador é serializado com joblib e enviado automaticamente para um bucket no Amazon S3 (tc5-mlops-artifacts). Este artefato é o que será consumido pela API no momento do deploy, garantindo o desacoplamento entre o treinamento e a inferência.
 
+Após a validação, o melhor estimador é serializado com joblib e enviado automaticamente para um bucket no Amazon S3 (tc5-mlops-artifacts). Este artefato é o que será consumido pela API no momento do deploy, garantindo o desacoplamento entre o treinamento e a inferência.
 
 ## 🧪 Testes
 
@@ -216,8 +210,8 @@ Para a rastreabilidade e governança do ciclo de vida do modelo, foi utilizado M
 3. **Registro de drift:** publicar artefatos de monitoramento (`drift_panel.html` e `drift_summary.csv`)
 4. **Acompanhamento contínuo:** abrir a UI do MLflow e validar runs, métricas de desempenho e sinais de desvio de distribuição. As métricas ficam em `Metrics` no run (`drift_avg_psi`, `drift_max_psi`, `drift_psi_<feature>`).
 
-5. **Logs:** 
-   - Coletados os logs no *CloudWatch Logs* no grupo
+5. **Logs:**
+   - Coletados os logs no _CloudWatch Logs_ no grupo
      `/aws/lambda/tc5-prediction-api`.
    - O Terraform provisiona o grupo com definição de retenção de 30 dias.
 
@@ -228,11 +222,11 @@ Para a rastreabilidade e governança do ciclo de vida do modelo, foi utilizado M
    - Essas métricas permitem montar gráficos simples e detectar mudanças na
      distribuição ao longo do tempo.
 
-3. **Dashboard de CloudWatch**
+7. **Dashboard de CloudWatch**
    - O `tc5-model-monitoring` com um widget para visualizar a média e o volume de
      previsões.
-   -  `https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:
-     name=tc5-model-monitoring`
+   - `https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:
+name=tc5-model-monitoring`
 
 **Ferramentas utilizadas:** MLflow,CloudWatch, Scikit-Learn, Python, AWS S3 (artefatos),IAM role.
 
@@ -267,7 +261,6 @@ Stack para monitorar logs da API em tempo real:
 ```bash
 cp .env.example .env
 ```
-
 2. `.env` com:
 - `GRAFANA_ADMIN_PASSWORD`
 - credenciais AWS (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` e opcionalmente `AWS_SESSION_TOKEN`) com acesso ao bucket de artefatos
@@ -277,22 +270,23 @@ cp .env.example .env
 ```bash
 docker compose up -d --build
 ```
-
 O dashboard provisionado `TC5 API Observability` paineis 
 - `Erros HTTP 503 (5m)`
 - `Stream De Erros 503`
 - `Latencia API`
 - `Stream De logs`
 
+**Ferramentas utilizadas:** Grafana,  Metrics e Logs Insights) e Terraform.
 
 ## 📊 Resultados
 
-O projeto consolidou um ecossistema **MLOps ponta a ponta**. No aspecto de modelagem, a combinação de janelas temporais com a técnica de balanceamento **SMOTE** e a otimização de hiperparâmetros (via `GridSearchCV`) resultou em um modelo classificador com **alto F1-Score**. A otimização desta métrica garante um equilíbrio ideal entre *Precision* e *Recall*, minimizando falsos positivos e maximizando a detecção de alunos com probabilidade real de evasão.
+O projeto consolidou um ecossistema **MLOps ponta a ponta**. No aspecto de modelagem, a combinação de janelas temporais com a técnica de balanceamento **SMOTE** e a otimização de hiperparâmetros (via `GridSearchCV`) resultou em um modelo classificador com **alto F1-Score**. A otimização desta métrica garante um equilíbrio ideal entre _Precision_ e _Recall_, minimizando falsos positivos e maximizando a detecção de alunos com probabilidade real de evasão.
 
 Do ponto de vista de arquitetura de produção e engenharia:
+
 - **Inferência Escalável e de Baixa Latência:** O deploy via AWS Lambda com FastAPI e Docker garante que as predições ocorram em tempo real, cobrando apenas pelo tempo de computação estritamente utilizado.
 - **Governança de Features:** A integração e centralização utilizando **Feast** (Feature Store) padroniza a entrega de informações tanto para treinamento quanto para inferência.
-- **Monitoramento e Observabilidade:** O pipeline automatizado usando **MLflow** para detectar mudanças de distribuição (*Data Drift* via PSI) aliado ao **Grafana / CloudWatch** assegura visibilidade contínua sobre a saúde técnica e estatística da solução.
+- **Monitoramento e Observabilidade:** O pipeline automatizado usando **MLflow** para detectar mudanças de distribuição (_Data Drift_ via PSI) aliado ao **Grafana / CloudWatch** assegura visibilidade contínua sobre a saúde técnica e estatística da solução.
 
 O resultado final não é apenas um modelo preditivo robusto; é uma ferramenta estratégica e sustentável que identifica rapidamente quem está em vulnerabilidade educacional. Isso otimiza o direcionamento de recursos da Passos Mágicos para onde eles são mais necessários: no futuro desses jovens. Transformamos dados em ação social.
 
@@ -311,51 +305,53 @@ cd tc5-datathon
 
 O pipeline automatizado do GitHub necessita de credenciais de um usuário IAM com acesso administrador (ou permissões para Lambda, ECR, API Gateway, S3, IAM, CloudWatch).
 Vá em `Settings > Secrets and variables > Actions > New repository secret` no GitHub e crie os seguintes "secrets":
+
 - `AWS_ACCESS_KEY_ID`: Sua Access Key Account principal.
 - `AWS_SECRET_ACCESS_KEY`: Sua Secret Key.
 
-*(O deploy está por padrão apontando para a região `us-east-1` e os recursos ECS usam contas da região `sa-east-1` conforme script de infraestrutura.)*
+_(O deploy está por padrão apontando para a região `us-east-1` e os recursos ECS usam contas da região `sa-east-1` conforme script de infraestrutura.)_
 
 ### 3. Suba a Infraestrutura (Push para a nuvem ou roteamento local com `act`)
 
 **Push para Branch Principal**
 Faça push de qualquer atualização diretamente no GitHub:
+
 ```bash
 git switch main
 git push origin main
 ```
+
 Isso acionará os jobs automatizados de Testes -> Treino (envio pro S3) -> Terraform (Criação Lambda + API).
 
 ### 4. Acesse o link (Swagger API)
 
-Após a etapa do Actions ser concluída com sucesso (seja via web ou act local), o Terraform terá disponibilizado a URL do API Gateway. 
+Após a etapa do Actions ser concluída com sucesso (seja via web ou act local), o Terraform terá disponibilizado a URL do API Gateway.
 Você pode visualizá-la diretamente checando o painel do API Gateway na nuvem AWS, ou pelo console, através do output:
 
 ```bash
 cd terraform
-terraform output 
+terraform output
 ```
 
-Encontre a URL base da API e acesse-a no navegador através da raiz terminada em `/docs` para abrir o Swagger Serverless (Exemplo: `https://[ID].execute-api.us-east-1.amazonaws.com/docs`). 
-
-
+Encontre a URL base da API e acesse-a no navegador através da raiz terminada em `/docs` para abrir o Swagger Serverless (Exemplo: `https://[ID].execute-api.us-east-1.amazonaws.com/docs`).
 
 ## Vídeo de Apresentação no Youtube (Modelo LSTM)
+
 Para melhor compreensão da entrega , foi produzido um vídeo de apresentação no Youtube:
 
 [Link para a Vídeo](https://link.com.br)
 
-
 ## ✒️ Autores
 
-| Nome                            |   RM    | Link do GitHub                                      |
-|---------------------------------|---------|-----------------------------------------------------|
-| Ana Paula de Almeida            | 363602  | [GitHub](https://github.com/Ana9873P)               |
-| Augusto do Nascimento Omena     | 363185  | [GitHub](https://github.com/AugustoOmena)           |
-| Bruno Gabriel de Oliveira       | 361248  | [GitHub](https://github.com/brunogabrieldeoliveira) |
-| José Walmir Gonçalves Duque     | 363196  | [GitHub](https://github.com/WALMIRDUQUE)            |
+| Nome                        | RM     | Link do GitHub                                      |
+| --------------------------- | ------ | --------------------------------------------------- |
+| Ana Paula de Almeida        | 363602 | [GitHub](https://github.com/Ana9873P)               |
+| Augusto do Nascimento Omena | 363185 | [GitHub](https://github.com/AugustoOmena)           |
+| Bruno Gabriel de Oliveira   | 361248 | [GitHub](https://github.com/brunogabrieldeoliveira) |
+| José Walmir Gonçalves Duque | 363196 | [GitHub](https://github.com/WALMIRDUQUE)            |
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a Licença MIT.  
-Consulte o arquivo [license](docs/license/license.txt)  para mais detalhes.
+Este projeto está licenciado sob a Licença MIT. 
+Consulte o arquivo [license](docs/license/license.txt) para mais detalhes.
+

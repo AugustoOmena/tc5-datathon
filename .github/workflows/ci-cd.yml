@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - fix-tests-pytest
   pull_request:
     branches:
       - main
+      - fix-tests-pytest
   workflow_dispatch:
 
 env:
