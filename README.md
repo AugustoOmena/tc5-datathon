@@ -228,15 +228,7 @@ Para a rastreabilidade e governança do ciclo de vida do modelo, foi utilizado M
 
 O monitoramento operacional da API é realizado com Grafana integrado com Loki e Promtail (via Docker Compose)
 
-1. **Provisionamento:** criar infraestrutura com Terraform e habilitar o workspace Grafana.
-2. **Acesso via SSO:** autenticar pelo AWS IAM Identity Center, associar usuário/grupo e atribuir perfil `Admin` ou `Editor`.
-3. **Integração de dados:** usar datasource `CloudWatch` para métricas de API Gateway e Lambda.
-4. **Logs no dashboard:** habilitar consultas de CloudWatch Logs Insights para análise por `requestId`.
-
-**Permissões mínimas para métricas e logs:**
-- `cloudwatch:GetMetricData`, `cloudwatch:GetMetricStatistics`, `cloudwatch:ListMetrics`
-- `logs:DescribeLogGroups`, `logs:DescribeLogStreams`, `logs:GetLogEvents`
-- `logs:StartQuery`, `logs:GetQueryResults`, `logs:GetLogGroupFields`
+**Provisionamento:** criado infraestrutura com Terraform e habilitar o Grafana.
 
 **Ferramentas utilizadas:** Grafana, Terraform,metrics e Logs Insights.
 - Login Grafana OSS
