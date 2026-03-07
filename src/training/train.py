@@ -266,6 +266,10 @@ def run_training():
     available_features = [f for f in features_desejadas if f in retrieval_df.columns]
     train_df = retrieval_df[available_features]
 
+    # Colunas de entidade (não são features de treino). Mantemos para salvar
+    # no CSV de inferência, mas não as usamos em SMOTE/treinamento.
+    entity_cols = [c for c in ("RA", "DATA_REGISTRO") if c in train_df.columns]
+
     # Separar 10% para validação balanceada (Dados REAIS)
     val_size = max(int(len(train_df) * 0.10), 2)
     n_per_class = max(val_size // 2, 1)
@@ -288,7 +292,8 @@ def run_training():
 
     df_treino_original = train_df.drop(df_val.index)
 
-    X_restante = df_treino_original.drop("EVASAO", axis=1)
+    # Remover colunas de entidade ao construir X para treinamento
+    X_restante = df_treino_original.drop(columns=["EVASAO"] + entity_cols, errors="ignore")
     y_restante = df_treino_original["EVASAO"]
 
     smote = SMOTE(sampling_strategy={0: 5000, 1: 5000}, random_state=42)
@@ -308,7 +313,8 @@ def run_training():
         X_val_scaled = X_test_scaled
         y_val = y_test
     else:
-        X_val_scaled = scaler.transform(df_val.drop("EVASAO", axis=1))
+        X_val_for_pred = df_val.drop(columns=["EVASAO"] + entity_cols, errors="ignore")
+        X_val_scaled = scaler.transform(X_val_for_pred)
         y_val = df_val["EVASAO"]
 
     results = []
@@ -362,7 +368,7 @@ def run_training():
         if df_val.shape[0] == 0:
             current_for_drift = X_test
         else:
-            current_for_drift = df_val.drop("EVASAO", axis=1)
+            current_for_drift = df_val.drop(columns=["EVASAO"] + entity_cols, errors="ignore")
         log_drift_panel_mlflow(reference_for_drift, current_for_drift, list(X_train.columns))
 
         # log do pipeline e parâmetros no MLflow
