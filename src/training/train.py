@@ -276,7 +276,8 @@ def run_training():
     # Salvar 10% dos dados de inferência no S3, separados por EVASAO / NAO_EVASAO
     if "RA" not in df_val.columns and "RA" in retrieval_df.columns:
         df_val = df_val.copy()
-        df_val["RA"] = retrieval_df.loc[df_val.index, "RA"].values
+        ra_series = retrieval_df["RA"].reindex(df_val.index)
+        df_val["RA"] = ra_series.values
 
     try:
         save_inference_data_to_s3(df_val)
