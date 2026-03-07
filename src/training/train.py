@@ -262,7 +262,9 @@ def run_training():
         "FASE",
         "ANO_INGRESSO",
     ]
-    train_df = retrieval_df[features_desejadas]
+    # Selecionar apenas as features disponíveis no retrieval_df para evitar KeyError
+    available_features = [f for f in features_desejadas if f in retrieval_df.columns]
+    train_df = retrieval_df[available_features]
 
     # Separar 10% para validação balanceada (Dados REAIS)
     val_size = max(int(len(train_df) * 0.10), 2)
@@ -390,9 +392,21 @@ def run_training():
 
     if "random_forest" in best_estimators:
         rf = best_estimators["random_forest"]
-        importances = pd.Series(rf.feature_importances_, index=X_restante.columns)
-        print("\nTop 5 Variáveis mais importantes (Random Forest):")
-        print(importances.sort_values(ascending=False).head(5))
+        try:
+            importances = pd.Series(rf.feature_importances_, index=X_restante.columns)
+        except Exception:
+            fi = getattr(rf, "feature_importances_", None)
+            importances = None
+            if fi is not None:
+                fi = np.asarray(fi)
+                cols = list(X_restante.columns)
+                # If RA was included in columns but not in feature_importances_, drop it
+                if "RA" in cols and fi.shape[0] == len(cols) - 1:
+                    cols_no_ra = [c for c in cols if c != "RA"]
+                    importances = pd.Series(fi, index=cols_no_ra)
+        if importances is not None:
+            print("\nTop 5 Variáveis mais importantes (Random Forest):")
+            print(importances.sort_values(ascending=False).head(5))
 
 
 if __name__ == "__main__":
