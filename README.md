@@ -87,6 +87,18 @@ TC5-DATATHON-MAIN
 │   ├── data/                # Armazenamento local de dados/parquets
 │   ├── feature_definitions.py # Definição de entidades e visualizações de features
 │   └── feature_store.yaml   # Configuração do ambiente do Feature Store
+├── monitoring/              # Monitoramento
+│   ├── grafana/             # Aplicação de monitoramento
+│   └── dashboards/          # Script do dash
+│   └── tc5-api-observability.json # Estrutura do dash
+│   ├── provisioning/         # Provisiona as configurações do dash
+│   └── dashboards.yaml       # configurações como nome e path
+│   ├── datasources/          # datasources do dash
+│   └── datasource.yaml       # configurações do datasources
+│   ├── loki/                 # Source para o Grafana
+│   └── config.yaml           # configuração como server e schema_config
+│   ├── promtail/             #  coletor de logs 
+│   └── config.yaml           # scrape_configs
 ├── notebooks/               # Documentação exploratória e prototipagem
 │   ├── EDA_DataPrep.ipynb   # Análise exploratória e preparação de dados
 │   ├── Train.ipynb          # Experimentação de treinamento do modelo
@@ -102,11 +114,13 @@ TC5-DATATHON-MAIN
 ├── terraform/               # Infraestrutura como Código (IaC) na AWS
 │   ├── ecr.tf               # Repositório de imagens Docker (Elastic Container Registry)
 │   ├── lambda.tf            # Configuração do processamento Serverless
+|   ├── main.tf              # Configuração do processamento Serverless
 │   ├── gateway.tf           # Configuração do API Gateway para acesso externo
 │   └── mlflow.tf            # Infraestrutura para rastreamento de experimentos
 ├── tests/                   # Suíte de testes automatizados
 │   ├── unit/                # Testes de funções e componentes isolados
 │   └── integration/         # Testes de fluxo ponta a ponta (E2E)
+├── docker-compose           # Configuração da imagem para deploy do container
 ├── Dockerfile               # Configuração da imagem para deploy do container
 ├── requirements.txt         # Dependências do projeto (Python)
 └── README.md                # Documentação principal do projeto
@@ -220,25 +234,49 @@ name=tc5-model-monitoring`
 
 ## 📈 Observabilidade com Grafana
 
-O monitoramento operacional da API é realizado com Grafana integrado ao CloudWatch.
+O monitoramento operacional da API é realizado com Grafana integrado com Loki e Promtail (via Docker Compose)
 
-1. **Provisionamento:** criar infraestrutura com Terraform e habilitar o workspace Grafana.
-2. **Acesso via SSO:** autenticar pelo AWS IAM Identity Center, associar usuário/grupo e atribuir perfil `Admin` ou `Editor`.
-3. **Integração de dados:** usar datasource `CloudWatch` para métricas de API Gateway e Lambda.
-4. **Logs no dashboard:** habilitar consultas de CloudWatch Logs Insights para análise por `requestId`.
+**Provisionamento:** criado infraestrutura com Terraform e habilitar o Grafana.
 
-**Permissões mínimas para métricas e logs:**
+**Ferramentas utilizadas:** Grafana, Terraform,metrics e Logs Insights.
+- Login Grafana OSS
 
-- `cloudwatch:GetMetricData`, `cloudwatch:GetMetricStatistics`, `cloudwatch:ListMetrics`
-- `logs:DescribeLogGroups`, `logs:DescribeLogStreams`, `logs:GetLogEvents`
-- `logs:StartQuery`, `logs:GetQueryResults`, `logs:GetLogGroupFields`
+**Link de acesso:** ([tc5-api-observability](http://localhost:3000/d/tc5-api-observability/tc5-api-observability?orgId=1&refresh=30s))
 
-**Ferramentas utilizadas:** Grafana, AWS IAM Identity Center, Amazon CloudWatch (Metrics e Logs Insights) e Terraform.
+### Observabilidade via Docker Compose (Loki + Promtail)
 
-- Conta AWS: `4880********2204`
-- Login local Grafana OSS (quando aplicável): usuário `admin` / senha `adm*****23`
+Stack para monitorar logs da API em tempo real:
 
-**Link de acesso:** [tc5-api-observability](http://localhost:3000/d/tc5-api-observability/tc5-api-observability?orgId=1&from=now-1h&to=now&timezone=browser&var-aws_region=us-east-1&var-api_id=kt97nlxbf6&var-lambda_function_name=tc5-prediction-api&var-aws_account_id=488081132204&var-apigw_log_group_name=%2Faws%2Fapigateway%2Ftc5-ml-gateway&refresh=30s)
+- `docker-compose.yml` com serviços `api`, `loki`, `promtail` e `grafana`
+- `monitoring/loki/config.yaml`
+- `monitoring/promtail/config.yaml`
+- `monitoring/grafana/provisioning/datasources/datasource.yaml`
+- `monitoring/grafana/provisioning/dashboards/dashboards.yaml`
+- `monitoring/grafana/dashboards/tc5-api-observability.json`
+
+#### Provisionar
+
+1. Crie o arquivo de ambiente local com as credenciais mascaradas no repositório:
+
+```bash
+cp .env.example .env
+```
+2. `.env` com:
+- `GRAFANA_ADMIN_PASSWORD`
+- credenciais AWS (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` e opcionalmente `AWS_SESSION_TOKEN`) com acesso ao bucket de artefatos
+- `ALLOW_STARTUP_WITHOUT_ARTIFACTS=false` para o endpoint `/predict` funcionar carregando modelo
+
+3. Suba a stack:
+```bash
+docker compose up -d --build
+```
+O dashboard provisionado `TC5 API Observability` paineis 
+- `Erros HTTP 503 (5m)`
+- `Stream De Erros 503`
+- `Latencia API`
+- `Stream De logs`
+
+**Ferramentas utilizadas:** Grafana,  Metrics e Logs Insights) e Terraform.
 
 ## 📊 Resultados
 
@@ -314,5 +352,6 @@ Para melhor compreensão da entrega , foi produzido um vídeo de apresentação 
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a Licença MIT.  
+Este projeto está licenciado sob a Licença MIT. 
 Consulte o arquivo [license](docs/license/license.txt) para mais detalhes.
+

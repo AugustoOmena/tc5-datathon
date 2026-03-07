@@ -1,0 +1,78 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tc5-api
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --access-log 2>&1 | tee -a /var/log/api/api.log"
+    environment:
+      ALLOW_STARTUP_WITHOUT_ARTIFACTS: ${ALLOW_STARTUP_WITHOUT_ARTIFACTS:-false}
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-sa-east-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-tc5-mlops-artifacts-f4d7a3e1}
+    ports:
+      - "8000:8000"
+    volumes:
+      - api_logs:/var/log/api
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:2.9.10
+    container_name: tc5-loki
+    command: ["-config.file=/etc/loki/config.yaml"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - observability
+
+  promtail:
+    image: grafana/promtail:2.9.10
+    container_name: tc5-promtail
+    command: ["-config.file=/etc/promtail/config.yaml"]
+    volumes:
+      - ./monitoring/promtail/config.yaml:/etc/promtail/config.yaml:ro
+      - api_logs:/var/log/api:ro
+      - promtail_positions:/tmp
+    depends_on:
+      - loki
+      - api
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: tc5-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?defina GRAFANA_ADMIN_PASSWORD no .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - loki
+    networks:
+      - observability
+
+volumes:
+  api_logs:
+  loki_data:
+  promtail_positions:
+  grafana_data:
+
+networks:
+  observability:
+    driver: bridge

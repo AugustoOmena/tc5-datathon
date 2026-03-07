@@ -1,8 +1,9 @@
 import io
 import os
+import time
 import joblib
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 from feast import FeatureStore
 from pathlib import Path
@@ -10,6 +11,7 @@ from mangum import Mangum
 import boto3
 import shutil
 import logging
+import subprocess
 
 # basic logger which will be captured by CloudWatch Logs when running in Lambda
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +29,22 @@ if MLFLOW_URI:
     mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT", "evasao_api"))
 
 app = FastAPI(title="Predição de Evasão Escolar - TC5")
+
+
+@app.middleware("http")
+async def request_timing_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+    # Log in logfmt to simplify Loki parsing and aggregations.
+    logger.info(
+        "api_request method=%s path=%s status=%s duration_ms=%.2f",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+    return response
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 REPO_PATH = BASE_DIR / "feature_repo"
@@ -66,6 +84,9 @@ def load_artifacts():
     
     source_repo = "/var/task/feature_repo"
     temp_repo = "/tmp/feature_repo"
+    allow_startup_without_artifacts = os.environ.get("ALLOW_STARTUP_WITHOUT_ARTIFACTS", "false").lower() in {
+        "1", "true", "yes"
+    }
     
     try:
         if os.path.exists(temp_repo):
@@ -73,6 +94,14 @@ def load_artifacts():
         shutil.copytree(source_repo, temp_repo)
         
         store = FeatureStore(repo_path=temp_repo)
+        # Ensure registry is populated in fresh containers.
+        try:
+            store.get_feature_service("aluno_service")
+        except Exception:
+            logger.info("Feature service ausente no registry; executando feast apply")
+            subprocess.run(["feast", "apply"], cwd=temp_repo, check=True)
+            store = FeatureStore(repo_path=temp_repo)
+
         logger.info("✅ Feast inicializado no /tmp")
         
         bucket_name = os.environ.get("S3_BUCKET_NAME", "tc5-mlops-artifacts-f4d7a3e1")
@@ -91,8 +120,13 @@ def load_artifacts():
         model = joblib.load(io.BytesIO(model_obj['Body'].read()))
         
     except Exception as e:
-        # Se falhar aqui, o log aparecerá agora porque estamos dentro do startup
+        # Optional local mode: keep API online for observability even without S3/Feast.
         logger.error(f"ERRO NO STARTUP: {str(e)}")
+        if allow_startup_without_artifacts:
+            model = None
+            store = None
+            logger.warning("API iniciada sem artefatos por ALLOW_STARTUP_WITHOUT_ARTIFACTS=true")
+            return
         raise e
     
 @app.get("/")
