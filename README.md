@@ -238,7 +238,6 @@ O monitoramento operacional da API é realizado com Grafana integrado ao CloudWa
 - Conta AWS: `4880********2204`
 - Login local Grafana OSS (quando aplicável): usuário `admin` / senha `adm*****23`
 
-**Link de acesso:** [tc5-api-observability](http://localhost:3000/d/tc5-api-observability/tc5-api-observability?orgId=1&from=now-1h&to=now&timezone=browser&var-aws_region=us-east-1&var-api_id=kt97nlxbf6&var-lambda_function_name=tc5-prediction-api&var-aws_account_id=488081132204&var-apigw_log_group_name=%2Faws%2Fapigateway%2Ftc5-ml-gateway&refresh=30s)
 
 ## 📊 Resultados
 
