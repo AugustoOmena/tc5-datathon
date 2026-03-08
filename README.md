@@ -297,11 +297,11 @@ terraform output
 
 Encontre a URL base da API e acesse-a no navegador através da raiz terminada em `/docs` para abrir o Swagger Serverless (Exemplo: `https://[ID].execute-api.us-east-1.amazonaws.com/docs`).
 
-## Vídeo de Apresentação no Youtube (Modelo LSTM)
+## Vídeo de Apresentação no Youtube (Modelo Evasão Escolar)
 
 Para melhor compreensão da entrega , foi produzido um vídeo de apresentação no Youtube:
 
-[Link para a Vídeo](https://link.com.br)
+[Link para a Vídeo](https://youtu.be/m10jFysI6Tk)
 
 ## ✒️ Autores
 
